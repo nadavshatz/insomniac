@@ -14,11 +14,15 @@
 #   toggle_engine.sh uninstall                    stop + remove root helper & boot guard
 #   toggle_engine.sh reconcile                    print active|degraded|orphan|inactive
 #   toggle_engine.sh status                       print raw state (debugging)
+#   toggle_engine.sh update_check [now]           check GitHub for a newer release
+#   toggle_engine.sh update_install [X.Y.Z]       download, verify, open in Alfred
 #
 # Whatever is printed last on stdout becomes the Alfred notification text.
 
 source "${0:A:h}/lib/common.zsh"
 typeset -r ENGINE=${0:A}
+typeset -gi HAS_UPDATER=0
+[[ -r $IN_WF_DIR/lib/update.zsh ]] && source $IN_WF_DIR/lib/update.zsh && HAS_UPDATER=1
 
 # ---------------------------------------------------------------------------
 # Privilege escalation
@@ -244,6 +248,46 @@ cmd_status() {
   print -r -- "helper current: $(helper_current && print yes || print no)"
 }
 
+# ---------------------------------------------------------------------------
+# Updates (GitHub build only; see lib/update.zsh)
+# ---------------------------------------------------------------------------
+cmd_update_check() {  # [now] — "now" = asked by the user, always report
+  (( HAS_UPDATER )) || { print "Updates for this copy are handled by Alfred"; return 0 }
+  local manual=${1:-}
+  if ! fetch_latest; then
+    [[ -n $manual ]] && print "Could not reach GitHub to check for updates"
+    return 1
+  fi
+  local latest=$REPLY cur=$(current_version)
+  update_mark_checked $latest
+  if version_gt $latest $cur; then
+    if [[ $CFG_UPDATE == auto && -z $manual ]]; then
+      cmd_update_install $latest
+      return
+    fi
+    print "Insomniac $latest is available (you have $cur). Type “${keyword:-awake} update” to install"
+  else
+    print "Insomniac $cur is up to date"
+  fi
+}
+
+cmd_update_install() {  # [version]
+  (( HAS_UPDATER )) || { print "Updates for this copy are handled by Alfred"; return 0 }
+  local v=${1:-} cur=$(current_version)
+  if [[ -z $v ]]; then
+    if update_available; then v=$REPLY; elif fetch_latest; then v=$REPLY; fi
+  fi
+  [[ -n $v ]] || { print "Could not find the latest release"; return 1 }
+  valid_version $v || { print "Invalid version: $v"; return 64 }
+  version_gt $v $cur || { print "Insomniac $cur is up to date"; return 0 }
+  if ! download_release $v; then
+    print "Update not installed: $UPD_ERR"
+    return 1
+  fi
+  $OPEN $REPLY || { print "Could not open the downloaded update"; return 1 }
+  print "Opening Insomniac $v. Confirm the update in Alfred"
+}
+
 main() {
   (( $# == 1 )) && set -- ${(z)1}
   local verb=${1:-}; shift 2>/dev/null
@@ -279,4 +323,12 @@ main() {
   esac
 }
 
-with_lock main "$@"
+# Update verbs talk to the network, so they run without the state lock and
+# can never delay a start or stop.
+if [[ ${${1:-}%% *} == update_(check|install) ]]; then
+  (( $# == 1 )) && set -- ${(z)1}
+  verb=$1; shift
+  cmd_$verb "$@"
+else
+  with_lock main "$@"
+fi

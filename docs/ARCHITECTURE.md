@@ -78,6 +78,14 @@ The indicator keeps no state of its own:
 
 The indicator inherits the engine's environment, so Alfred's workflow settings apply to actions taken from its menu too.
 
+## Updates (GitHub build only)
+
+`lib/update.zsh` exists only in the GitHub build. `scripts/build.sh --gallery` removes it, along with its setting and icon, because Gallery workflows must not update themselves. Every caller checks whether the file exists first.
+
+- **Check:** `curl -fsSI …/releases/latest`, then read the `Location: …/releases/tag/vX.Y.Z` redirect. No API token, no JSON parsing. The Script Filter starts this in the background at most once every 24h, and writes the cache timestamp first so the 1-second reruns don't pile up. The result is cached in `$alfred_workflow_cache/update`.
+- **Install:** download the release's `.alfredworkflow` and `.sha256`, verify the checksum, the bundle ID and the version, then `open` the file. Alfred's own import dialog does the actual update and keeps the user's configuration.
+- The update verbs run outside the engine's state lock, so a slow network can't delay start or stop.
+
 ## Privilege escalation
 
 1. If a sudoers rule permits the helper (`sudo -n -l <helper>`), the engine uses `sudo -n` and no prompt appears.

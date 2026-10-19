@@ -37,6 +37,12 @@ pmset -g assertions | grep caffeinate    # idle-only sessions
 cat ~/Library/Application\ Support/Alfred/Workflow\ Data/io.github.nadavshatz.insomniac/state
 ```
 
+### "Update not installed: checksum mismatch" (or wrong bundle id / version mismatch)
+The download didn't match what the release says it should be, so it was deleted and nothing was installed. Try again later, or download the release by hand from [Releases](https://github.com/nadavshatz/insomniac/releases). If it keeps happening, please open an issue.
+
+### "Could not reach GitHub to check for updates"
+You're offline, or a firewall or VPN blocks github.com. Insomniac works normally regardless. Only the update check is skipped.
+
 ### Completely remove everything
 Run `awake uninstall`, then delete the workflow. Manual fallback:
 ```sh

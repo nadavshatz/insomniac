@@ -45,6 +45,7 @@ Targets macOS 14 Sonoma, 15 Sequoia and later. Works on Apple Silicon and Intel.
 | **⌘↩** on any start item | Same duration in the *other* mode |
 | **⌥↩** on any start item | Same session with the opposite display choice. With the default setting, that means the display sleeps but the Mac stays awake |
 | ↩ on the status row | Stops everything and restores the default power settings |
+| `awake update` | Checks for a new version now, or installs one that was found |
 | `awake uninstall` | Removes the privileged helper and the boot guard |
 
 While a session runs, the menu also offers **Extend +15m / +1h** and **Switch mode** (the timer carries over).
@@ -61,6 +62,16 @@ Open Alfred Preferences → Workflows → Insomniac → *Configure Workflow…*
 | `battery_floor` | `10` | On battery, closed-lid mode ends at this % (0 = off) |
 | `thermal_guard` | on | Closed-lid mode ends if macOS reports a thermal warning |
 | `menubar` | on | Show the menu bar indicator while a session runs |
+| `update_mode` | Tell me in Alfred | Daily update check against GitHub Releases: *Tell me in Alfred*, *Download and open automatically*, or *Never check* |
+
+### Updates
+
+The GitHub build checks [Releases](https://github.com/nadavshatz/insomniac/releases) once a day in the background. When a newer version exists, the menu shows **Update available: Insomniac X.Y.Z**. Pressing ↩:
+1. downloads the `.alfredworkflow` and its `.sha256` from the release;
+2. checks the checksum, the bundle ID and the version;
+3. opens it, so Alfred shows its normal *update workflow* prompt and keeps your settings.
+
+Nothing is installed without Alfred's prompt. To turn this off, set **Updates** to *Never check*. A copy installed from the Alfred Gallery has no updater: Alfred updates it.
 
 ---
 
@@ -137,7 +148,7 @@ sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper 
 ## Development
 
 ```sh
-zsh tests/run_tests.sh       # 103 tests; pmset/caffeinate/osascript are mocked
+zsh tests/run_tests.sh       # 141 tests; pmset/caffeinate/osascript are mocked
 zsh tests/build_test.sh      # packaging test
 zsh tests/wiki_test.sh       # wiki link check
 node tests/menubar_test.js   # menu bar logic (fake Cocoa bridge)

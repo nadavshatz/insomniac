@@ -85,6 +85,14 @@ Any of these ends the session and restores normal sleep:
 
 Closed-lid mode asks for your admin password when you stop it early, unless you set up the [sudoers rule](Settings#passwordless-closed-lid-mode).
 
+## Updating
+
+Type `awake update`:
+- **Check for updates now** asks GitHub for the latest release.
+- **Install Insomniac X.Y.Z** appears when a newer version is available. It downloads the release, verifies its checksum, bundle ID and version, then opens it, and Alfred asks you to confirm the update. Your settings are kept.
+
+You don't need to check by hand: once a day the menu shows **Update available: Insomniac X.Y.Z** at the bottom when there is one. See [Updates](Settings#updates) to make it automatic or turn it off. Copies installed from the Alfred Gallery are updated by Alfred instead.
+
 ## Uninstalling
 
 Type `awake uninstall` and press ↩. This removes the root helper and the boot guard (see [Closed-Lid Mode](Closed-Lid-Mode)). Then delete the workflow in Alfred Preferences.
