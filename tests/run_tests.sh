@@ -76,7 +76,7 @@ check "stop kills caffeinate" eval '! alive $cpid'
 check "stop clears state" eval '[[ -z $(statefile) && $msg == "Normal sleep restored" ]]'
 
 engine start_idle 1 >/dev/null; sleep 1.6
-check "expired idle session self-heals to inactive" eval '[[ $(titles) == "Keep Awake Indefinitely"* && -z $(statefile) ]]'
+check "expired idle session self-heals to inactive" eval '[[ $(titles) == *"Keep Awake Indefinitely"* && $(titles) != Active* && -z $(statefile) ]]'
 
 # --- closed-lid mode with timer ----------------------------------------------
 msg=$(engine start_closed_lid 3)
@@ -163,6 +163,46 @@ prevent_display_sleep=0 engine start_idle 600 >/dev/null
 check "setting off → display sleeps by default" eval '[[ $(<$MOCK_DIR/caffeinate.args) != *-d* ]]'
 check "setting off → ⌥↩ keeps display on" eval '[[ $(prevent_display_sleep=0 filter 45m) == *"start_idle 2700 display=1"* ]]'
 engine stop >/dev/null
+
+# --- presets, bare numbers, last used ------------------------------------------
+rm -f $alfred_workflow_data/last
+t=$(titles)
+check "6h and 12h presets are offered" eval '[[ $t == *"Keep Awake for 6h"* && $t == *"Keep Awake for 12h"* ]]'
+check "bare small number: hours first, then minutes" eval '[[ $(titles 3 | head -2 | tr "\n" "|") == "Keep Awake for 3h|Keep Awake for 3m|" ]]'
+check "bare large number: minutes first" eval '[[ $(titles 45) == "Keep Awake for 45m"$'"'"'\n'"'"'"Keep Awake for 1d 21h"* ]]'
+check "bare number too big for hours: minutes only" eval '[[ $(titles 200) == "Keep Awake for 3h 20m"* && $(titles 200) != *"8d"* ]]'
+check "lid + bare number" eval '[[ $(titles "lid 2") == "Keep Awake with Closed Lid for 2h"* ]]'
+check "bare zero is rejected" eval '[[ $(titles 0) == "Unrecognised duration"* ]]'
+check "units still work (3m)" eval '[[ $(titles 3m) == "Keep Awake for 3m"* && $(titles 3m) != *"for 3h"* ]]'
+
+engine start_idle 2700 >/dev/null; engine stop >/dev/null
+check "last used is the top suggestion" eval '[[ $(titles) == "Keep Awake for 45m · last used"* ]]'
+check "last used is not repeated in the presets" eval '(( $(titles | grep -c "^Keep Awake for 45m") == 1 ))'
+check "last used survives with indefinite still offered" eval '[[ $(titles) == *"Keep Awake Indefinitely"* ]]'
+engine start_idle 600 display=0 >/dev/null; engine stop >/dev/null
+check "last used remembers display choice" eval '[[ $(filter) == *'"'"'"arg":"start_idle 600 display=0"'"'"'* ]]'
+engine start_closed_lid 7200 >/dev/null; engine stop >/dev/null
+check "last used closed-lid comes first" eval '[[ $(titles) == "Keep Awake with Closed Lid for 2h · last used"* ]]'
+check "after closed-lid, presets default to closed-lid" eval '[[ $(titles) == *"Keep Awake with Closed Lid for 6h"* ]]'
+check "typing idle hides a closed-lid last-used" eval '[[ $(titles idle) != *"last used"* ]]'
+engine start_idle 600 >/dev/null; engine extend 900 >/dev/null
+check "extend does not overwrite last used" eval '[[ $(<$alfred_workflow_data/last) == "idle 600 1" ]]'
+engine start_closed_lid 300 display=1 nolast >/dev/null
+check "switch (nolast) does not overwrite last used" eval '[[ $(<$alfred_workflow_data/last) == "idle 600 1" ]]'
+engine stop >/dev/null
+check "unknown engine option is rejected" eval '[[ $(engine start_idle 60 bogus) == "Unknown option: bogus" ]]'
+print -n "lid 99999999 1" > $alfred_workflow_data/last
+check "corrupt last-used file is ignored" eval '[[ $(titles) != *"last used"* && $(titles) == "Keep Awake Indefinitely"* ]]'
+rm -f $alfred_workflow_data/last
+
+# --- reconcile -------------------------------------------------------------------
+engine start_closed_lid 0 >/dev/null
+cpid=${${(M)${(f)"$(statefile)"}:#CAF_PID=*}#CAF_PID=}
+check "reconcile reports active" eval '[[ $(engine reconcile) == active ]]'
+print "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=1)\t5%; discharging; 0:10 remaining present: true" > $MOCK_DIR/batt
+wait_for '[[ $(sd) == 0 ]]'; rm $MOCK_DIR/batt
+check "reconcile reports inactive after guardian ended it" eval '[[ $(engine reconcile) == inactive ]]'
+check "reconcile stops the companion caffeinate" wait_for '! alive $cpid'
 
 # --- uninstall -----------------------------------------------------------------
 engine uninstall >/dev/null

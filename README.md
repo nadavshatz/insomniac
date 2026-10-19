@@ -9,7 +9,7 @@ Insomniac keeps your Mac awake from Alfred. It shows a live countdown, supports 
 - **Two modes:**
   - **Idle Only** uses `caffeinate`. The Mac won't idle-sleep, but closing the lid still sleeps it. No admin rights needed.
   - **Closed-Lid** uses `pmset -a disablesleep 1`. The Mac stays awake with the lid shut, for downloads, renders, SSH sessions or a headless server. It needs an admin password.
-- **Timers:** presets, plus any duration you type (`45m`, `3h`, `1h30m`, `2:30`, `until 17:30`).
+- **Timers:** presets (15m to 12h), your last-used session at the top, and any duration you type (`45m`, `3h`, `1h30m`, `3`, `until 17:30`).
 - **Failsafes:** a timer, a battery floor, a thermal guard, signal traps and a boot-time reset.
 - **Visibility:** it lists the other apps holding sleep assertions (Zoom, Xcode, other `caffeinate`s).
 
@@ -32,9 +32,11 @@ Targets macOS 14 Sonoma, 15 Sequoia and later. Works on Apple Silicon and Intel.
 | You type | What happens |
 | --- | --- |
 | `awake` | Shows status when a session is active, otherwise the menu |
+| `awake` → top item | **Repeats your last session**: same length, mode and display choice |
 | `awake` → *Keep Awake Indefinitely* | `caffeinate -i -d` until you stop it |
 | `awake` → *Keep Awake with Closed Lid* | `pmset -a disablesleep 1` until you stop it |
-| `awake 45m`, `awake 1h30m`, `awake 2:30`, `awake 90` (minutes) | Timed idle-only session |
+| `awake 45m`, `awake 1h30m`, `awake 2:30` | Timed idle-only session |
+| `awake 3` (a bare number) | Offers both **3h** and **3m**. Hours are listed first for 1–12, minutes first for larger numbers |
 | `awake lid 2h` | Timed closed-lid session |
 | `awake until 17:30`, `awake @6pm` | Session ends at that wall-clock time |
 | **⌘↩** on any start item | Same duration in the *other* mode |
@@ -51,7 +53,7 @@ Open Alfred Preferences → Workflows → Insomniac → *Configure Workflow…*
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `keyword` | `awake` | Alfred keyword |
-| `presets` | `15m,30m,1h,2h` | Preset durations shown in the menu |
+| `presets` | `15m,30m,1h,2h,6h,12h` | Preset durations shown in the menu |
 | `prevent_display_sleep` | on | Default display choice. On adds `-d` to `caffeinate`. Off lets the display sleep while the Mac stays awake (`-i` only). ⌥↩ flips it for one session |
 | `battery_floor` | `10` | On battery, closed-lid mode ends at this % (0 = off) |
 | `thermal_guard` | on | Closed-lid mode ends if macOS reports a thermal warning |

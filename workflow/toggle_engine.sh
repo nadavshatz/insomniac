@@ -8,9 +8,11 @@
 #       pmset disablesleep 1 + root guardian
 #   display=1 keeps the display on (caffeinate -d), display=0 lets it sleep
 #   while the system stays awake. Omitted: the prevent_display_sleep setting.
+#   nolast: don't remember this start as the "last used" suggestion.
 #   toggle_engine.sh extend <seconds>             add time to the running session
 #   toggle_engine.sh stop                         end everything, restore defaults
 #   toggle_engine.sh uninstall                    stop + remove root helper & boot guard
+#   toggle_engine.sh reconcile                    print active|degraded|orphan|inactive
 #   toggle_engine.sh status                       print raw state (debugging)
 #
 # Whatever is printed last on stdout becomes the Alfred notification text.
@@ -97,6 +99,9 @@ kill_caffeinate() {
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
+# 0 = don't record this start as the last-used suggestion (set in main).
+typeset -gi REMEMBER=1
+
 describe() {  # mode secs → human message
   local what="Keeping your Mac awake"
   [[ $1 == lid ]] && what="Closed-lid mode on"
@@ -125,6 +130,7 @@ cmd_start_idle() {
   fi
   state_write MODE=idle STARTED=$EPOCHSECONDS SECS=$secs \
               EXPIRES=$(( secs ? EPOCHSECONDS + secs : 0 )) CAF_PID=$REPLY DISPLAY=$DISP
+  (( REMEMBER )) && last_write idle $secs $DISP
   describe idle $secs
 }
 
@@ -148,6 +154,7 @@ cmd_start_closed_lid() {
   spawn_caffeinate $secs
   state_write MODE=lid STARTED=$EPOCHSECONDS SECS=$secs EXPIRES=$expires \
               CAF_PID=${REPLY:-} GUARD_PID=$gpid DISPLAY=$DISP
+  (( REMEMBER )) && last_write lid $secs $DISP
   describe lid $secs
 }
 
@@ -173,6 +180,7 @@ cmd_extend() {
   (( exp > 0 )) || { print "Session is already indefinite"; return 0 }
   integer left=$(( exp - EPOCHSECONDS )); (( left < 0 )) && left=0
   integer total=$(( left + add )); (( total > MAX_SECS )) && total=MAX_SECS
+  REMEMBER=0
   if [[ ${ST[MODE]} == lid ]]; then cmd_start_closed_lid $total; else cmd_start_idle $total; fi
 }
 
@@ -202,12 +210,19 @@ cmd_status() {
 main() {
   (( $# == 1 )) && set -- ${(z)1}
   local verb=${1:-}; shift 2>/dev/null
-  local n=${1:-0} opt=${2:-}
+  local n=${1:-0} opt disp=
   [[ $n == <-> ]] || { print "Invalid duration: $n"; return 64 }
+  for opt in ${@[2,-1]}; do
+    case $opt in
+      display=[01]) disp=${opt#display=} ;;
+      nolast)       REMEMBER=0 ;;
+      *)            print "Unknown option: $opt"; return 64 ;;
+    esac
+  done
   # Display choice: explicit display=0|1, else (for extend) the running
   # session's choice, else the workflow setting.
-  if [[ $opt == display=(#b)([01]) ]]; then
-    DISP=$match[1]
+  if [[ -n $disp ]]; then
+    DISP=$disp
   elif [[ $verb == extend ]] && state_read && [[ ${ST[DISPLAY]:-} == [01] ]]; then
     DISP=${ST[DISPLAY]}
   else
@@ -220,6 +235,7 @@ main() {
     extend)           cmd_extend $n ;;
     stop|restore)     cmd_stop ;;
     uninstall)        cmd_uninstall ;;
+    reconcile)        reconcile; print -r -- $STATUS ;;
     status)           cmd_status ;;
     noop|'')          return 0 ;;
     *)                print "Unknown action: $verb"; return 64 ;;

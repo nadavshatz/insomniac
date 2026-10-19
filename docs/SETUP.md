@@ -17,7 +17,7 @@ The release `.alfredworkflow` comes fully wired. This guide is for building it b
 | Type | Variable | Default | Label |
 | --- | --- | --- | --- |
 | Text Field | `keyword` | `awake` | Keyword |
-| Text Field | `presets` | `15m,30m,1h,2h` | Preset durations |
+| Text Field | `presets` | `15m,30m,1h,2h,6h,12h` | Preset durations |
 | Checkbox | `prevent_display_sleep` | ✔ | Prevent display sleep |
 | Text Field | `battery_floor` | `10` | Battery floor (%) |
 | Checkbox | `thermal_guard` | ✔ | Thermal guard |

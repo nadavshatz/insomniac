@@ -32,6 +32,7 @@ typeset -r OSASCRIPT="${INSOMNIAC_OSASCRIPT:-/usr/bin/osascript}"
 typeset -r IN_DATA="${alfred_workflow_data:-$HOME/Library/Application Support/Alfred/Workflow Data/$IN_LABEL}"
 typeset -r IN_STATE="$IN_DATA/state"
 typeset -r IN_LOCK="$IN_DATA/.lock"
+typeset -r IN_LAST="$IN_DATA/last"            # "<mode> <secs> <display>" of the last start
 [[ -d $IN_DATA ]] || mkdir -p -m 700 -- "$IN_DATA"
 
 # ---------------------------------------------------------------------------
@@ -40,7 +41,7 @@ typeset -r IN_LOCK="$IN_DATA/.lock"
 is_true() { [[ ${1:l} == (1|true|yes|on) ]] }
 
 typeset -r CFG_DISPLAY="${prevent_display_sleep:-1}"
-typeset -r CFG_PRESETS="${presets:-15m,30m,1h,2h}"
+typeset -r CFG_PRESETS="${presets:-15m,30m,1h,2h,6h,12h}"
 typeset -r CFG_BATT_FLOOR="${battery_floor:-10}"
 typeset -r CFG_THERMAL="${thermal_guard:-1}"
 typeset -ri MAX_SECS=$(( 7 * 86400 ))
@@ -67,6 +68,19 @@ state_write() {  # state_write KEY=VAL ...
 }
 
 state_clear() { rm -f -- $IN_STATE }
+
+# Last-used session, offered as the top suggestion. Sets LAST_MODE,
+# LAST_SECS, LAST_DISPLAY; returns 1 if nothing valid is recorded.
+last_read() {
+  LAST_MODE= LAST_SECS= LAST_DISPLAY=
+  [[ -r $IN_LAST ]] || return 1
+  local m s d
+  read -r m s d < $IN_LAST
+  [[ $m == (idle|lid) && $s == <-> && $d == [01] ]] || return 1
+  (( s <= MAX_SECS )) || return 1
+  LAST_MODE=$m LAST_SECS=$s LAST_DISPLAY=$d
+}
+last_write() { print -r -- "$1 $2 $3" > $IN_LAST }
 
 # ---------------------------------------------------------------------------
 # System probes
@@ -118,6 +132,33 @@ foreign_assertions() {
     seen[$name]=1
     reply+=($name)
   done
+}
+
+# reconcile — compare the recorded state with reality and clean up.
+# Sets STATUS (inactive | active | degraded | orphan), SD (0|1), GPID.
+#   active    session running as recorded
+#   degraded  closed-lid recorded, sleep still disabled, guardian gone
+#   orphan    no session, but `disablesleep 1` is in effect
+# A closed-lid session the guardian already ended (timer, battery, thermal)
+# has its companion caffeinate stopped here, so the Mac can sleep again.
+reconcile() {
+  state_read
+  SD=$(sleep_disabled)
+  GPID=$(guard_pid)
+  STATUS=inactive
+  case ${ST[MODE]:-} in
+    idle)
+      if caf_alive "${ST[CAF_PID]:-}"; then STATUS=active; else state_clear; ST=(); fi ;;
+    lid)
+      if (( SD )) && guard_alive "${GPID:-${ST[GUARD_PID]:-}}"; then STATUS=active
+      elif (( SD )); then STATUS=degraded
+      else
+        caf_alive "${ST[CAF_PID]:-}" && kill -TERM ${ST[CAF_PID]} 2>/dev/null
+        state_clear; ST=()
+      fi ;;
+  esac
+  [[ $STATUS == inactive ]] && (( SD )) && STATUS=orphan
+  return 0
 }
 
 # ---------------------------------------------------------------------------
