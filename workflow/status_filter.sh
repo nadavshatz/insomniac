@@ -41,10 +41,12 @@ emit() {
 
 # ---------------------------------------------------------------------------
 # Query parsing:  [lid|idle] [<duration> | until <time> | @<time>]
-# Sets Q_MODE (idle|lid|""), Q_SECS (0 = none), Q_BAD (1 = unparseable)
+# Sets Q_MODE (idle|lid|""), Q_SECS (0 = none), Q_BAD (1 = unparseable).
+# A bare number ("3") is ambiguous, so Q_SECS2 holds the other reading:
+# 1–12 suggest hours first, larger numbers suggest minutes first.
 # ---------------------------------------------------------------------------
 typeset Q_MODE= Q_RAW=${(L)${1:-}}
-typeset -i Q_SECS=0 Q_BAD=0 Q_UNTIL=0
+typeset -i Q_SECS=0 Q_SECS2=0 Q_BAD=0 Q_UNTIL=0
 parse_query() {
   local -a words rest
   local w
@@ -59,6 +61,14 @@ parse_query() {
     esac
   done
   (( $#rest )) || return 0
+  if (( ! Q_UNTIL && $#rest == 1 )) && [[ $rest[1] == <1-> ]]; then
+    integer n=$rest[1] mins=0 hours=0
+    (( n * 60 <= MAX_SECS )) && mins=$(( n * 60 ))
+    (( n * 3600 <= MAX_SECS )) && hours=$(( n * 3600 ))
+    if (( n <= 12 )); then Q_SECS=$hours Q_SECS2=$mins; else Q_SECS=$mins Q_SECS2=$hours; fi
+    (( Q_SECS )) || Q_BAD=1
+    return 0
+  fi
   if (( Q_UNTIL )); then parse_clock "${(j::)rest}"; else parse_duration "${(j::)rest}"; fi \
     && Q_SECS=$REPLY || Q_BAD=1
 }
@@ -67,26 +77,29 @@ parse_query
 integer DEF_DISP=0; is_true $CFG_DISPLAY && DEF_DISP=1
 disp_note() { (( $1 )) && print "display stays on" || print "display can sleep" }
 
-# Offer a timed (or indefinite) pair: primary mode on ↩, the other on ⌘↩.
-offer() {  # secs prefer_mode title_prefix
-  integer s=$1
+# Offer a timed (or indefinite) session: primary mode on ↩, the other mode
+# on ⌘↩, the opposite display choice on ⌥↩.
+offer() {  # secs prefer_mode title_prefix [title_suffix] [display 0|1]
+  integer s=$1 disp=${5:-$DEF_DISP}
+  local sfx=${4:-} d=
+  (( disp == DEF_DISP )) || d=" display=$disp"
   local idle_t="Keep Awake Indefinitely" lid_t="Keep Awake with Closed Lid" tail= icon=idle
   if (( s )); then
     idle_t="Keep Awake for $(fmt_dur $s)" lid_t+=" for $(fmt_dur $s)" icon=timer
     tail="Until $(fmt_clock $(( EPOCHSECONDS + s ))) · "
   fi
-  local note=$(disp_note $DEF_DISP)
+  local note=$(disp_note $disp)
   local idle_sub="${tail}Prevents idle sleep (caffeinate), $note · ⌘↩ closed-lid · ⌥↩ display"
   local lid_sub="${tail}Disables all system sleep (pmset), $note · needs admin · ⌘↩ idle-only · ⌥↩ display"
   # ⌥↩: same session with the opposite display choice.
-  integer alt=$(( !DEF_DISP ))
-  local alt_sub="${tail}Same, but the $(disp_note $alt) for this session"
+  integer alt=$(( !disp ))
+  local alt_sub="${tail}Same, but keep the display on this time"
   (( alt )) || alt_sub="${tail}Same, but let the display sleep this time (Mac stays awake)"
   if [[ $2 == lid ]]; then
-    item "$3$lid_t" "$lid_sub" "start_closed_lid $s" true lid "start_idle $s" "$idle_sub" \
+    item "$3$lid_t$sfx" "$lid_sub" "start_closed_lid $s$d" true lid "start_idle $s$d" "$idle_sub" \
          "start_closed_lid $s display=$alt" "$alt_sub"
   else
-    item "$3$idle_t" "$idle_sub" "start_idle $s" true $icon "start_closed_lid $s" "$lid_sub" \
+    item "$3$idle_t$sfx" "$idle_sub" "start_idle $s$d" true $icon "start_closed_lid $s$d" "$lid_sub" \
          "start_idle $s display=$alt" "$alt_sub"
   fi
 }
@@ -94,20 +107,8 @@ offer() {  # secs prefer_mode title_prefix
 # ---------------------------------------------------------------------------
 # Reconcile recorded state with reality
 # ---------------------------------------------------------------------------
-state_read
-integer SD=$(sleep_disabled)
-GPID=$(guard_pid)
-STATUS=inactive        # inactive | active | degraded | orphan
-
-case ${ST[MODE]:-} in
-  idle)
-    if caf_alive "${ST[CAF_PID]:-}"; then STATUS=active; else state_clear; ST=(); fi ;;
-  lid)
-    if (( SD )) && guard_alive "${GPID:-${ST[GUARD_PID]:-}}"; then STATUS=active
-    elif (( SD )); then STATUS=degraded
-    else state_clear; ST=(); fi ;;
-esac
-[[ $STATUS == inactive ]] && (( SD )) && STATUS=orphan
+integer SD
+reconcile
 
 # ---------------------------------------------------------------------------
 # Build the menu
@@ -142,6 +143,7 @@ case $STATUS in
 
     if (( Q_SECS )); then
       offer $Q_SECS ${Q_MODE:-${ST[MODE]}} "Replace with: "
+      (( Q_SECS2 )) && offer $Q_SECS2 ${Q_MODE:-${ST[MODE]}} "Replace with: "
     elif (( Q_BAD )); then
       item "Unrecognised duration “$Q_RAW”" "Try 45m · 1h30m · 2:30 · until 17:30 · lid 2h" "" false warning
     else
@@ -151,9 +153,9 @@ case $STATUS in
       fi
       integer rem=$(( exp ? (exp - EPOCHSECONDS > 0 ? exp - EPOCHSECONDS : 0) : 0 ))
       if [[ ${ST[MODE]} == idle ]]; then
-        item "Switch to Closed-Lid mode" "Keeps the same timer · needs admin" "start_closed_lid $rem display=$sdisp" true lid
+        item "Switch to Closed-Lid mode" "Keeps the same timer · needs admin" "start_closed_lid $rem display=$sdisp nolast" true lid
       else
-        item "Switch to Idle-Only mode" "Re-enables lid-close sleep · keeps the same timer" "start_idle $rem display=$sdisp" true idle
+        item "Switch to Idle-Only mode" "Re-enables lid-close sleep · keeps the same timer" "start_idle $rem display=$sdisp nolast" true idle
       fi
     fi
     ;;
@@ -172,16 +174,26 @@ if [[ $STATUS != active ]]; then
     item "Unrecognised duration “$Q_RAW”" "Try 45m · 1h30m · 2:30 · until 17:30 · lid 2h" "" false warning
   elif (( Q_SECS )); then
     offer $Q_SECS ${Q_MODE:-idle} ""
+    (( Q_SECS2 )) && offer $Q_SECS2 ${Q_MODE:-idle} ""
   else
-    if [[ $Q_MODE == lid ]]; then
-      offer 0 lid ""; offer 0 idle ""
+    # Top suggestion: repeat the last session (same mode, length, display).
+    pmode=${Q_MODE:-idle} skip=
+    if last_read && [[ -z $Q_MODE || $Q_MODE == $LAST_MODE ]]; then
+      offer $LAST_SECS $LAST_MODE "" " · last used" $LAST_DISPLAY
+      [[ $LAST_MODE == $pmode && $LAST_DISPLAY == $DEF_DISP ]] && skip=$LAST_SECS
+      [[ -z $Q_MODE ]] && pmode=$LAST_MODE
+    fi
+    if [[ $pmode == lid ]]; then
+      [[ $skip != 0 ]] && offer 0 lid ""
+      offer 0 idle ""
     else
-      offer 0 idle ""; offer 0 lid ""
+      [[ $skip != 0 ]] && offer 0 idle ""
+      offer 0 lid ""
     fi
     for p in ${(s:,:)CFG_PRESETS}; do
-      parse_duration "$p" && offer $REPLY ${Q_MODE:-idle} ""
+      parse_duration "$p" && [[ $REPLY != $skip ]] && offer $REPLY $pmode ""
     done
-    item "Custom duration…" "Type e.g. 45m · 3h · 1h30m · 2:30 · until 17:30 · lid 2h" "" false custom
+    item "Custom duration…" "Type minutes or hours: 3 → 3h or 3m · 45m · 1h30m · until 17:30 · lid 2h" "" false custom
   fi
 
   # Explain how the last closed-lid session ended, if recent and automatic.
