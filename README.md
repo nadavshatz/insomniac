@@ -14,16 +14,18 @@ Insomniac keeps your Mac awake from Alfred. It shows a live countdown, supports 
 - **Failsafes:** a timer, a battery floor, a thermal guard, signal traps and a boot-time reset.
 - **Visibility:** it lists the other apps holding sleep assertions (Zoom, Xcode, other `caffeinate`s).
 
+📖 **Full guide:** the [wiki](https://github.com/nadavshatz/insomniac/wiki) covers [usage](https://github.com/nadavshatz/insomniac/wiki/Usage), [every setting](https://github.com/nadavshatz/insomniac/wiki/Settings), [closed-lid mode](https://github.com/nadavshatz/insomniac/wiki/Closed-Lid-Mode) and [troubleshooting](https://github.com/nadavshatz/insomniac/wiki/Troubleshooting). Its source lives in [`docs/wiki/`](docs/wiki) and is published by CI.
+
 Targets macOS 14 Sonoma, 15 Sequoia and later. Works on Apple Silicon and Intel. Requires Alfred 5 with the Powerpack.
 
 ---
 
 ## Installation
 
-1. Download `Insomniac-x.y.z.alfredworkflow` from [Releases](https://github.com/nadavshatz/insomniac/releases), or build it yourself:
+1. Download `Insomniac-x.y.z.alfredworkflow` from the [latest release](https://github.com/nadavshatz/insomniac/releases/latest), or build it yourself:
    ```sh
    git clone https://github.com/nadavshatz/insomniac.git
-   cd insomniac && zsh scripts/build.sh     # → dist/Insomniac-1.0.0.alfredworkflow
+   cd insomniac && zsh scripts/build.sh     # → dist/Insomniac-1.1.0.alfredworkflow
    ```
 2. Double-click the file to import it into Alfred.
 3. In the configuration sheet, choose your keyword. The default is **`awake`**. If you prefer `sleep`, it works, but Alfred's built-in *Sleep* system command will appear next to it.
@@ -135,8 +137,10 @@ sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper 
 ## Development
 
 ```sh
-zsh tests/run_tests.sh       # 70 tests; pmset/caffeinate/osascript are mocked
+zsh tests/run_tests.sh       # 103 tests; pmset/caffeinate/osascript are mocked
 zsh tests/build_test.sh      # packaging test
+zsh tests/wiki_test.sh       # wiki link check
+node tests/menubar_test.js   # menu bar logic (fake Cocoa bridge)
 zsh scripts/build.sh [X.Y.Z] # package dist/*.alfredworkflow
 python3 scripts/make_plist.py   # regenerate info.plist   (dev only, stdlib)
 python3 scripts/make_icons.py   # regenerate icons        (dev only, Pillow)
