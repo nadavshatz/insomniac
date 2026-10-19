@@ -1,0 +1,5 @@
+#!/bin/zsh -f
+# Mock `osascript -l JavaScript menubar.js …`: logs its args and idles, with
+# the real command line visible to ps so the engine can find it.
+print -r -- "$*" >> $MOCK_DIR/jxa.log
+exec -a "jxa-mock $*" sleep 100000

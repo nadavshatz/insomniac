@@ -21,6 +21,7 @@ The release `.alfredworkflow` comes fully wired. This guide is for building it b
 | Checkbox | `prevent_display_sleep` | ✔ | Prevent display sleep |
 | Text Field | `battery_floor` | `10` | Battery floor (%) |
 | Checkbox | `thermal_guard` | ✔ | Thermal guard |
+| Checkbox | `menubar` | ✔ | Show menu bar indicator |
 
 Alfred exports these to both scripts as environment variables. The scripts also read `alfred_workflow_data`, which Alfred sets automatically. State is stored at `~/Library/Application Support/Alfred/Workflow Data/io.github.nadavshatz.insomniac/state`.
 

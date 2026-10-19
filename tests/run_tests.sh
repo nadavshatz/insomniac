@@ -17,6 +17,7 @@ export MOCK_DIR=$SANDBOX/mock INSOMNIAC_PREFIX=$SANDBOX/root
 export INSOMNIAC_PMSET=$ROOT/tests/mocks/pmset
 export INSOMNIAC_CAFFEINATE=$ROOT/tests/mocks/caffeinate
 export INSOMNIAC_OSASCRIPT=$ROOT/tests/mocks/osascript
+export INSOMNIAC_JXA=$ROOT/tests/mocks/jxa
 export INSOMNIAC_POLL=1
 export alfred_workflow_data=$SANDBOX/data
 export PATH=$ROOT/tests/mocks:$PATH
@@ -204,8 +205,43 @@ wait_for '[[ $(sd) == 0 ]]'; rm $MOCK_DIR/batt
 check "reconcile reports inactive after guardian ended it" eval '[[ $(engine reconcile) == inactive ]]'
 check "reconcile stops the companion caffeinate" wait_for '! alive $cpid'
 
+# --- menu bar indicator lifecycle --------------------------------------------------
+mbpid() { cat $alfred_workflow_data/menubar.pid 2>/dev/null }
+engine start_idle 600 >/dev/null
+m1=$(mbpid)
+check "start launches the menu bar indicator" eval '[[ -n $m1 ]] && alive $m1'
+check "indicator gets data dir and engine path" eval '[[ $(tail -1 $MOCK_DIR/jxa.log) == "-l JavaScript $WF/menubar.js $alfred_workflow_data $WF/toggle_engine.sh" ]]'
+engine extend 900 >/dev/null
+check "extend keeps the same indicator (no duplicates)" eval '[[ $(mbpid) == $m1 ]] && alive $m1'
+engine start_closed_lid 600 >/dev/null
+check "mode switch keeps the same indicator" eval '[[ $(mbpid) == $m1 ]] && alive $m1'
+INSOMNIAC_FROM_MENUBAR=1 engine stop >/dev/null
+check "stop from the indicator's own menu leaves it to quit itself" eval 'alive $m1 && [[ $(sd) == 0 ]]'
+kill $m1 2>/dev/null
+engine start_idle 600 >/dev/null
+m2=$(mbpid)
+engine stop >/dev/null
+check "stop from Alfred closes the indicator" wait_for '! alive $m2'
+check "stop removes the indicator pid file" eval '[[ -z $(mbpid) ]]'
+menubar=0 engine start_idle 600 >/dev/null
+check "menubar=0 does not launch it" eval '[[ -z $(mbpid) ]]'
+engine stop >/dev/null
+engine start_idle 600 >/dev/null; m3=$(mbpid)
+menubar=0 engine start_idle 300 >/dev/null
+check "turning the setting off closes a running indicator" wait_for '! alive $m3'
+engine stop >/dev/null
+sleep 300 &; decoy=$!
+print -n $decoy > $alfred_workflow_data/menubar.pid      # recycled PID, not ours
+engine start_idle 600 >/dev/null
+check "stale pid file: a fresh indicator is launched" eval '[[ $(mbpid) != $decoy ]] && alive $(mbpid)'
+print -n $decoy > $alfred_workflow_data/menubar.pid
+engine stop >/dev/null
+check "stale pid file: an unrelated process is never killed" eval 'alive $decoy'
+kill $decoy; pkill -f jxa-mock 2>/dev/null
+
 # --- uninstall -----------------------------------------------------------------
 engine uninstall >/dev/null
+check "uninstall leaves no indicator running" eval '[[ -z $(mbpid) ]]'
 check "uninstall removes helper and boot guard" eval '[[ ! -e $INSOMNIAC_PREFIX/Library/PrivilegedHelperTools/$IN_LABEL.helper && ! -e $INSOMNIAC_PREFIX/Library/LaunchDaemons/$IN_LABEL.bootguard.plist ]]'
 
 print "\n$pass passed, $fail failed"

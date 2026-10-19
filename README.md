@@ -6,6 +6,7 @@ Insomniac keeps your Mac awake from Alfred. It shows a live countdown, supports 
 
 - **No dependencies.** It's pure `/bin/zsh` plus tools that ship with macOS (`caffeinate`, `pmset`, `osascript`). It needs no Python, Homebrew or pip.
 - **Live status.** Alfred shows `Active (Closed-Lid): 42m 07s remaining`, updated every second.
+- **Menu bar indicator.** While a session runs, a ☕ (or 💻 for closed-lid) icon shows the time left, with *Extend* and *Stop* in its menu. It disappears when the session ends.
 - **Two modes:**
   - **Idle Only** uses `caffeinate`. The Mac won't idle-sleep, but closing the lid still sleeps it. No admin rights needed.
   - **Closed-Lid** uses `pmset -a disablesleep 1`. The Mac stays awake with the lid shut, for downloads, renders, SSH sessions or a headless server. It needs an admin password.
@@ -57,6 +58,7 @@ Open Alfred Preferences → Workflows → Insomniac → *Configure Workflow…*
 | `prevent_display_sleep` | on | Default display choice. On adds `-d` to `caffeinate`. Off lets the display sleep while the Mac stays awake (`-i` only). ⌥↩ flips it for one session |
 | `battery_floor` | `10` | On battery, closed-lid mode ends at this % (0 = off) |
 | `thermal_guard` | on | Closed-lid mode ends if macOS reports a thermal warning |
+| `menubar` | on | Show the menu bar indicator while a session runs |
 
 ---
 

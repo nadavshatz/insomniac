@@ -18,6 +18,7 @@
 # Whatever is printed last on stdout becomes the Alfred notification text.
 
 source "${0:A:h}/lib/common.zsh"
+typeset -r ENGINE=${0:A}
 
 # ---------------------------------------------------------------------------
 # Privilege escalation
@@ -97,6 +98,38 @@ kill_caffeinate() {
 }
 
 # ---------------------------------------------------------------------------
+# Menu bar indicator (menubar.js, run by osascript -l JavaScript)
+# ---------------------------------------------------------------------------
+menubar_running() {  # → REPLY=pid
+  local pid=
+  [[ -r $IN_MENUBAR_PID ]] && pid=$(<$IN_MENUBAR_PID)
+  proc_matches "$pid" '*menubar.js*' && REPLY=$pid
+}
+
+menubar_stop() {
+  # Called from the indicator's own menu: it posts the result and quits by
+  # itself once the session is gone, so don't kill it mid-call.
+  [[ -n ${INSOMNIAC_FROM_MENUBAR:-} ]] && return 0
+  menubar_running && kill -TERM $REPLY 2>/dev/null
+  rm -f -- $IN_MENUBAR_PID
+  return 0
+}
+
+# Start the indicator if enabled and not already running. It inherits this
+# process's environment (Alfred's workflow variables), so engine calls made
+# from its menu behave exactly like calls made from Alfred.
+menubar_ensure() {
+  is_true $CFG_MENUBAR || { menubar_stop; return 0 }
+  menubar_running && return 0
+  [[ -r $IN_MENUBAR_JS ]] || return 0
+  /usr/bin/nohup $JXA_RUNNER -l JavaScript $IN_MENUBAR_JS "$IN_DATA" "$ENGINE" \
+    </dev/null >/dev/null 2>&1 &
+  print -r -- $! > $IN_MENUBAR_PID
+  disown
+  return 0
+}
+
+# ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
 # 0 = don't record this start as the last-used suggestion (set in main).
@@ -131,6 +164,7 @@ cmd_start_idle() {
   state_write MODE=idle STARTED=$EPOCHSECONDS SECS=$secs \
               EXPIRES=$(( secs ? EPOCHSECONDS + secs : 0 )) CAF_PID=$REPLY DISPLAY=$DISP
   (( REMEMBER )) && last_write idle $secs $DISP
+  menubar_ensure
   describe idle $secs
 }
 
@@ -155,6 +189,7 @@ cmd_start_closed_lid() {
   state_write MODE=lid STARTED=$EPOCHSECONDS SECS=$secs EXPIRES=$expires \
               CAF_PID=${REPLY:-} GUARD_PID=$gpid DISPLAY=$DISP
   (( REMEMBER )) && last_write lid $secs $DISP
+  menubar_ensure
   describe lid $secs
 }
 
@@ -169,6 +204,7 @@ cmd_stop() {
   local was=${ST[MODE]:-}
   kill_caffeinate
   state_clear
+  menubar_stop
   if [[ -n $was ]]; then print "Normal sleep restored"; else print "Sleep settings are at system defaults"; fi
 }
 
@@ -196,6 +232,7 @@ cmd_uninstall() {
   fi
   state_read && kill_caffeinate
   state_clear
+  menubar_stop
   print "Privileged helper removed — you can now delete the workflow"
 }
 

@@ -251,6 +251,25 @@ Source &amp; docs: https://github.com/nadavshatz/insomniac</string>
 			<key>config</key>
 			<dict>
 				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Show menu bar indicator</string>
+			</dict>
+			<key>description</key>
+			<string>While a session runs, show a menu bar icon with the time left, Extend and Stop.</string>
+			<key>label</key>
+			<string>Menu bar</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>menubar</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
 				<string>10</string>
 				<key>placeholder</key>
 				<string>10</string>
