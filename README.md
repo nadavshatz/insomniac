@@ -132,10 +132,21 @@ sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper 
 
 ```sh
 zsh tests/run_tests.sh       # 70 tests; pmset/caffeinate/osascript are mocked
-zsh scripts/build.sh         # package dist/*.alfredworkflow
+zsh tests/build_test.sh      # packaging test
+zsh scripts/build.sh [X.Y.Z] # package dist/*.alfredworkflow
 python3 scripts/make_plist.py   # regenerate info.plist   (dev only, stdlib)
 python3 scripts/make_icons.py   # regenerate icons        (dev only, Pillow)
 ```
+
+### Releases
+
+CI (`.github/workflows/ci.yml`) runs the test suite on macOS and Linux for every push and pull request. To publish a release, push a version tag:
+
+```sh
+git tag v1.2.0 && git push origin v1.2.0
+```
+
+The `release` job reruns the tests, builds `Insomniac-1.2.0.alfredworkflow` with the version stamped from the tag, and attaches it to a new [GitHub Release](https://github.com/nadavshatz/insomniac/releases) with generated notes.
 
 Run the tests as a normal user, not root. They never change your real power settings. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the internals and [docs/SETUP.md](docs/SETUP.md) to wire the workflow by hand in Alfred's editor.
 

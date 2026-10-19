@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zsh
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: Syntax check
+        run: for f in workflow/*.sh workflow/lib/*.zsh workflow/helper/*.sh scripts/*.sh tests/*.sh; do zsh -n "$f" || exit 1; done
+      - name: Test suite (mocked pmset/caffeinate/osascript)
+        run: zsh tests/run_tests.sh
+      - name: Packaging test
+        run: zsh tests/build_test.sh
+      - name: Lint plists
+        if: runner.os == 'macOS'
+        run: plutil -lint workflow/info.plist workflow/helper/*.plist
+      - name: Build
+        run: zsh scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          name: Insomniac.alfredworkflow
+          path: dist/*.alfredworkflow
+
+  release:
+    # Push a tag like v1.2.0 to publish a GitHub Release with the workflow attached.
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (version stamped from tag)
+        run: zsh scripts/build.sh "${GITHUB_REF_NAME#v}"
+      - name: Verify package
+        run: |
+          plutil -lint dist/stage/info.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print :version' dist/stage/info.plist)" = "${GITHUB_REF_NAME#v}"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.alfredworkflow \
+            --title "Insomniac $GITHUB_REF_NAME" --generate-notes --verify-tag
