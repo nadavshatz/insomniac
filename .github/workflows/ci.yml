@@ -24,6 +24,11 @@ jobs:
         run: zsh tests/run_tests.sh
       - name: Packaging test
         run: zsh tests/build_test.sh
+      - name: Menu bar indicator tests (Node, fake Cocoa bridge)
+        run: node tests/menubar_test.js
+      - name: Compile menu bar script with the real JXA compiler
+        if: runner.os == 'macOS'
+        run: osacompile -l JavaScript -o "$RUNNER_TEMP/menubar.scpt" workflow/menubar.js
       - name: Lint plists
         if: runner.os == 'macOS'
         run: plutil -lint workflow/info.plist workflow/helper/*.plist

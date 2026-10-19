@@ -21,6 +21,7 @@
 | --- | --- | --- |
 | `workflow/status_filter.sh` | user | Script Filter: reconciles state, emits JSON |
 | `workflow/toggle_engine.sh` | user | Backend: start/stop/extend, privilege escalation |
+| `workflow/menubar.js` | user | Menu bar indicator (JXA + Cocoa bridge), started and stopped by the engine |
 | `workflow/lib/common.zsh` | user | Shared paths, state I/O, probes, duration parser, formatting |
 | `workflow/helper/insomniac-helper.sh` | **root** (installed copy) | `pmset` + guardian |
 | `workflow/helper/*.bootguard.plist` | **root** (launchd) | Boot-time reset |
@@ -65,6 +66,17 @@ PIDs are checked with `ps -p PID -o command=` against an expected pattern. That 
   The guardian runs as root deliberately. When the timer ends the lid may be closed, and an authorization prompt then could never be answered.
 - A user-level `caffeinate` also runs in closed-lid mode, so behaviour with the lid *open* matches idle mode (display option included).
 - **Switching** lid→lid replaces the guardian within one privileged call. The old guardian is stopped and waited for before `disablesleep 1` is set again, so its exit trap can't race the new setting.
+
+## Menu bar indicator
+
+`toggle_engine.sh` starts `osascript -l JavaScript menubar.js <data_dir> <engine>` after a successful start, unless one is already running (tracked in `$alfred_workflow_data/menubar.pid` and verified with `ps`). It stops the indicator on `stop`/`uninstall`, or when the `menubar` setting is off.
+
+The indicator keeps no state of its own:
+- Every second it re-reads the state file and redraws the title (`42m`, `1h 05m`, `∞`), using an SF Symbol (`cup.and.saucer.fill`, `laptopcomputer`, or a warning triangle when degraded).
+- Every 5 seconds it runs `toggle_engine.sh reconcile`. If the session is gone, it posts a notification explaining why (timer, battery, heat) and quits.
+- Menu actions (*Extend +15m / +1h*, *Stop*) call the engine with `INSOMNIAC_FROM_MENUBAR=1`, so the engine doesn't kill the caller mid-call.
+
+The indicator inherits the engine's environment, so Alfred's workflow settings apply to actions taken from its menu too.
 
 ## Privilege escalation
 

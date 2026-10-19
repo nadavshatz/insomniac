@@ -26,6 +26,10 @@ typeset -r IN_LAST_REASON="$IN_PREFIX/var/run/$IN_LABEL.last"
 typeset -r PMSET="${INSOMNIAC_PMSET:-/usr/bin/pmset}"
 typeset -r CAFFEINATE="${INSOMNIAC_CAFFEINATE:-/usr/bin/caffeinate}"
 typeset -r OSASCRIPT="${INSOMNIAC_OSASCRIPT:-/usr/bin/osascript}"
+# Runs workflow/menubar.js (JavaScript for Automation). Separate from
+# OSASCRIPT so the test-suite can mock the two independently.
+typeset -r JXA_RUNNER="${INSOMNIAC_JXA:-/usr/bin/osascript}"
+typeset -r IN_MENUBAR_JS="$IN_WF_DIR/menubar.js"
 
 # Alfred exports these; fall back to Alfred's conventional locations so the
 # scripts can also be driven from a terminal.
@@ -33,6 +37,7 @@ typeset -r IN_DATA="${alfred_workflow_data:-$HOME/Library/Application Support/Al
 typeset -r IN_STATE="$IN_DATA/state"
 typeset -r IN_LOCK="$IN_DATA/.lock"
 typeset -r IN_LAST="$IN_DATA/last"            # "<mode> <secs> <display>" of the last start
+typeset -r IN_MENUBAR_PID="$IN_DATA/menubar.pid"
 [[ -d $IN_DATA ]] || mkdir -p -m 700 -- "$IN_DATA"
 
 # ---------------------------------------------------------------------------
@@ -42,6 +47,7 @@ is_true() { [[ ${1:l} == (1|true|yes|on) ]] }
 
 typeset -r CFG_DISPLAY="${prevent_display_sleep:-1}"
 typeset -r CFG_PRESETS="${presets:-15m,30m,1h,2h,6h,12h}"
+typeset -r CFG_MENUBAR="${menubar:-1}"
 typeset -r CFG_BATT_FLOOR="${battery_floor:-10}"
 typeset -r CFG_THERMAL="${thermal_guard:-1}"
 typeset -ri MAX_SECS=$(( 7 * 86400 ))
