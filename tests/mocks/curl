@@ -1,0 +1,25 @@
+#!/bin/zsh -f
+# Mock curl for update tests. Serves "GitHub":
+#   HEAD …/releases/latest           → 302 to …/releases/tag/v$(<$MOCK_DIR/latest)
+#   GET  …/releases/download/vX/FILE → $MOCK_DIR/releases/vX/FILE
+setopt extended_glob
+print -r -- "$*" >> $MOCK_DIR/curl.log
+[[ -e $MOCK_DIR/offline ]] && exit 6
+out= url= head=0
+while (( $# )); do
+  case $1 in
+    -o) out=$2; shift ;;
+    -*I*) head=1 ;;
+    http*) url=$1 ;;
+  esac
+  shift
+done
+if (( head )); then
+  [[ $url == */releases/latest ]] || exit 22
+  printf 'HTTP/2 302\r\nlocation: https://github.com/nadavshatz/insomniac/releases/tag/v%s\r\n\r\n' "$(<$MOCK_DIR/latest)"
+  exit 0
+fi
+[[ $url == (#b)*/releases/download/([^/]##)/([^/]##) ]] || exit 22
+src=$MOCK_DIR/releases/$match[1]/$match[2]
+[[ -f $src ]] || exit 22
+cp -- $src $out

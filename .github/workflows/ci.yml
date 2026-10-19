@@ -96,7 +96,19 @@ jobs:
           echo "VERSION=$v" >> "$GITHUB_ENV"
           echo "TAG=v$v" >> "$GITHUB_ENV"
       - name: Build (version stamped)
-        run: zsh scripts/build.sh "$VERSION"
+        # Once listed in the Alfred Gallery (repo variable GALLERY_LISTED=true),
+        # release the Gallery build: Alfred updates it, so no self-updater.
+        env:
+          GALLERY_LISTED: ${{ vars.GALLERY_LISTED }}
+        run: |
+          if [ "$GALLERY_LISTED" = true ]; then
+            zsh scripts/build.sh --gallery "$VERSION"
+            mv "dist/Insomniac-$VERSION-gallery.alfredworkflow" "dist/Insomniac-$VERSION.alfredworkflow"
+            (cd dist && shasum -a 256 "Insomniac-$VERSION.alfredworkflow" > "Insomniac-$VERSION.alfredworkflow.sha256")
+            rm -f dist/*-gallery.alfredworkflow.sha256
+          else
+            zsh scripts/build.sh "$VERSION"
+          fi
       - name: Verify package
         run: |
           plutil -lint dist/stage/info.plist
@@ -106,5 +118,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_REF_TYPE" = tag ]; then target=(--verify-tag); else target=(--target "$GITHUB_SHA"); fi
-          gh release create "$TAG" dist/*.alfredworkflow \
+          gh release create "$TAG" dist/*.alfredworkflow dist/*.alfredworkflow.sha256 \
             --title "Insomniac $TAG" --generate-notes "${target[@]}"

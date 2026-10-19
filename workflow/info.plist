@@ -148,6 +148,7 @@ Type the keyword (default: awake) to see status or pick a mode:
   awake lid 2h          timed closed-lid session
   ⌥↩ on a start item    same, with the opposite display choice
   awake until 17:30     until a wall-clock time
+  awake update          check for / install a new version
   awake uninstall       remove the privileged helper
 
 Closed-lid mode uses `pmset -a disablesleep 1` and asks for an administrator
@@ -270,6 +271,36 @@ Source &amp; docs: https://github.com/nadavshatz/insomniac</string>
 			<key>config</key>
 			<dict>
 				<key>default</key>
+				<string>notify</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>Tell me in Alfred</string>
+						<string>notify</string>
+					</array>
+					<array>
+						<string>Download and open automatically</string>
+						<string>auto</string>
+					</array>
+					<array>
+						<string>Never check</string>
+						<string>off</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>Checks GitHub Releases once a day. Installing always goes through Alfred's own update prompt.</string>
+			<key>label</key>
+			<string>Updates</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>update_mode</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
 				<string>10</string>
 				<key>placeholder</key>
 				<string>10</string>
@@ -310,7 +341,7 @@ Source &amp; docs: https://github.com/nadavshatz/insomniac</string>
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>1.1.0</string>
+	<string>1.2.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/nadavshatz/insomniac</string>
 </dict>

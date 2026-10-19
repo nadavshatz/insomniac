@@ -6,7 +6,7 @@ Object graph:  Script Filter ──▶ Run Script ──▶ Post Notification
 import plistlib
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 SF, RS, PN = ("A1F0C0FE-0001-4000-8000-000000000001",
               "A1F0C0FE-0002-4000-8000-000000000002",
               "A1F0C0FE-0003-4000-8000-000000000003")
@@ -19,6 +19,7 @@ Type the keyword (default: awake) to see status or pick a mode:
   awake lid 2h          timed closed-lid session
   ⌥↩ on a start item    same, with the opposite display choice
   awake until 17:30     until a wall-clock time
+  awake update          check for / install a new version
   awake uninstall       remove the privileged helper
 
 Closed-lid mode uses `pmset -a disablesleep 1` and asks for an administrator
@@ -103,6 +104,11 @@ info = {
         {"variable": "menubar", "type": "checkbox", "label": "Menu bar",
          "description": "While a session runs, show a menu bar icon with the time left, Extend and Stop.",
          "config": {"default": True, "required": False, "text": "Show menu bar indicator"}},
+        {"variable": "update_mode", "type": "popupbutton", "label": "Updates",
+         "description": "Checks GitHub Releases once a day. Installing always goes through Alfred's own update prompt.",
+         "config": {"default": "notify", "pairs": [["Tell me in Alfred", "notify"],
+                                                   ["Download and open automatically", "auto"],
+                                                   ["Never check", "off"]]}},
         {"variable": "battery_floor", "type": "textfield", "label": "Battery floor (%)",
          "description": "Closed-lid mode ends automatically on battery at or below this level. 0 disables.",
          "config": {"default": "10", "placeholder": "10", "required": False, "trim": True}},

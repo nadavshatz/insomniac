@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mock open(1): records what would be handed to Alfred.
+echo "$*" >> "$MOCK_DIR/open.log"

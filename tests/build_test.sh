@@ -28,7 +28,26 @@ cmp -s $ROOT/workflow/info.plist $X/info.plist && bad "source info.plist was mod
 for p in $(cd $X && print -l -- **/*(.)); do
   [[ $p == (tests|scripts|docs)/* ]] && bad "dev file shipped: $p"
 done
+[[ -f $PKG.sha256 ]] && ok "checksum file written" || bad "checksum file missing"
+if [[ -x /usr/bin/shasum ]]; then got=$(/usr/bin/shasum -a 256 $PKG); else got=$(sha256sum $PKG); fi
+[[ $(<$PKG.sha256) == "${got%% *}  ${PKG:t}" ]] && ok "checksum matches package" || bad "checksum does not match"
+[[ -f $X/lib/update.zsh ]] && ok "GitHub build includes the updater" || bad "GitHub build lacks the updater"
+[[ $(<$X/info.plist) == *"<string>update_mode</string>"* ]] && ok "GitHub build has the Updates setting" || bad "Updates setting missing"
+
+zsh $ROOT/scripts/build.sh --gallery 9.8.7 >/dev/null
+GPKG=$ROOT/dist/Insomniac-9.8.7-gallery.alfredworkflow
+GX=$(mktemp -d)
+(cd $GX && unzip -q $GPKG)
+[[ ! -e $GX/lib/update.zsh && ! -e $GX/icons/update.png ]] && ok "Gallery build has no updater code" || bad "Gallery build ships the updater"
+[[ $(<$GX/info.plist) != *update_mode* && $(<$GX/info.plist) != *"awake update"* ]] && ok "Gallery build has no Updates setting" || bad "Gallery plist mentions updates"
+[[ $(<$GX/info.plist) == *"<string>thermal_guard</string>"* && $(<$GX/info.plist) == *"<string>battery_floor</string>"* ]] \
+  && ok "Gallery build keeps the other settings" || bad "Gallery build lost settings"
+if command -v plutil >/dev/null; then plutil -lint -s $GX/info.plist && ok "Gallery plist lints" || bad "Gallery plist invalid"
+else python3 -c "import plistlib,sys;plistlib.load(open(sys.argv[1],'rb'))" $GX/info.plist && ok "Gallery plist parses" || bad "Gallery plist invalid"; fi
+grep -rqE 'curl|releases/(latest|download)' $GX && bad "Gallery build still references downloads" || ok "Gallery build never downloads anything"
+rm -rf $GX; rm -f $GPKG $GPKG.sha256
+
 zsh $ROOT/scripts/build.sh not-a-version >/dev/null 2>&1 && bad "bad version accepted" || ok "bad version rejected"
-rm -f $PKG
+rm -f $PKG $PKG.sha256
 (( fail == 0 )) && print "\nbuild: all passed"
 (( fail == 0 ))

@@ -66,6 +66,13 @@ def info(d):
     d.rounded_rectangle((462, 400, 562, 780), radius=40, fill=COLORS["white"])
 
 
+def update(d):
+    c = COLORS["white"]
+    d.ellipse((220, 220, 804, 804), outline=c, width=60)
+    d.rounded_rectangle((482, 330, 542, 600), radius=25, fill=c)
+    d.polygon([(372, 540), (652, 540), (512, 700)], fill=c)
+
+
 def pencil(d):
     d.polygon([(300, 724), (330, 610), (640, 300), (724, 384), (414, 694)], fill=COLORS["white"])
     d.polygon([(300, 724), (330, 610), (414, 694)], fill=COLORS["cream"])
@@ -81,6 +88,7 @@ ICONS = {
     "warning": ("amber", warning),
     "info": ("grey", info),
     "custom": ("grey", pencil),
+    "update": ("blue", update),
 }
 
 if __name__ == "__main__":

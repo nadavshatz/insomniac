@@ -8,6 +8,7 @@ Open **Alfred Preferences → Workflows → Insomniac → Configure Workflow…*
 | [Preset durations](#preset-durations) | `presets` | `15m,30m,1h,2h,6h,12h` |
 | [Prevent display sleep](#prevent-display-sleep) | `prevent_display_sleep` | ✔ on |
 | [Menu bar](#menu-bar) | `menubar` | ✔ on |
+| [Updates](#updates) | `update_mode` | Tell me in Alfred |
 | [Battery floor](#battery-floor) | `battery_floor` | `10` |
 | [Thermal guard](#thermal-guard) | `thermal_guard` | ✔ on |
 
@@ -52,6 +53,18 @@ Decides what happens to the **screen** during a session. **The Mac itself stays 
 ## Menu bar
 
 Shows the [menu bar indicator](Usage#menu-bar-indicator) while a session runs, with the time left, *Extend* and *Stop*. Turn it off if you'd rather keep the menu bar clean. Alfred still shows the full status. Turning it off also closes an indicator that's already showing, the next time you start or stop a session.
+
+## Updates
+
+How Insomniac handles new versions published on [GitHub Releases](https://github.com/nadavshatz/insomniac/releases). It checks at most once every 24 hours, in the background, the first time you open the menu that day.
+
+| Choice | What happens when a new version exists |
+| --- | --- |
+| **Tell me in Alfred** (default) | The menu shows *Update available: Insomniac X.Y.Z*. ↩ installs it |
+| **Download and open automatically** | Downloads, verifies, and opens Alfred's update prompt by itself. You still click *Update* in Alfred |
+| **Never check** | No network requests at all. You can still run `awake update` by hand |
+
+Every download is checked against the release's `.sha256` file, and its bundle ID and version must match before Alfred is asked to install it. If you installed Insomniac from the **Alfred Gallery**, this setting doesn't exist: Alfred updates Gallery workflows itself.
 
 ## Battery floor
 

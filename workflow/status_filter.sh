@@ -7,6 +7,8 @@
 # ("rerun": 1) so the countdown is live.
 
 source "${0:A:h}/lib/common.zsh"
+typeset -i HAS_UPDATER=0
+[[ -r $IN_WF_DIR/lib/update.zsh ]] && source $IN_WF_DIR/lib/update.zsh && HAS_UPDATER=1
 
 # ---------------------------------------------------------------------------
 # Alfred JSON
@@ -120,6 +122,26 @@ if [[ $Q_RAW == (#s)[[:space:]]#uninstall[[:space:]]#(#e) ]]; then
   emit; exit 0
 fi
 
+if [[ $Q_RAW == (#s)[[:space:]]#(update|updates|version)[[:space:]]#(#e) ]]; then
+  if (( HAS_UPDATER )); then
+    cur=$(current_version) checked=never
+    if [[ -r $UPD_FILE ]]; then
+      read -r _ at < $UPD_FILE
+      [[ ${at:-} == <-> ]] && checked=$(fmt_clock $at)
+      (( EPOCHSECONDS - ${at:-0} > 86400 )) && checked="$(strftime '%b %d' ${at:-0})"
+    fi
+    if update_available; then
+      item "Install Insomniac $REPLY" "You have $cur · downloads from GitHub, verifies it, then Alfred asks to update" \
+           "update_install $REPLY" true update
+    fi
+    item "Check for updates now" "Installed: Insomniac $cur · last checked: $checked · setting: $CFG_UPDATE" \
+         "update_check now" true update
+  else
+    item "Insomniac ${alfred_workflow_version:-}" "Installed from the Alfred Gallery: Alfred keeps it up to date" "" false info
+  fi
+  emit; exit 0
+fi
+
 case $STATUS in
   active)
     RERUN=1
@@ -210,6 +232,20 @@ if [[ $STATUS != active ]]; then
       [[ -n $msg ]] && item "Last closed-lid session ended at $(fmt_clock $at)" \
         "Normal sleep was restored automatically: $msg" "" false info
     fi
+  fi
+fi
+
+# Update notice (GitHub build), and a background check at most once a day.
+if (( HAS_UPDATER )); then
+  if update_available; then
+    item "Update available: Insomniac $REPLY" "You have $(current_version) · ↩ Download and install" \
+         "update_install $REPLY" true update
+  fi
+  if update_due; then
+    # Mark first so the 1-second reruns don't start more checks.
+    update_available && last_seen=$REPLY || last_seen=$(current_version)
+    update_mark_checked $last_seen
+    /usr/bin/nohup ${0:A:h}/toggle_engine.sh update_check </dev/null >/dev/null 2>&1 &!
   fi
 fi
 

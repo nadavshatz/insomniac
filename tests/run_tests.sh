@@ -18,8 +18,9 @@ export INSOMNIAC_PMSET=$ROOT/tests/mocks/pmset
 export INSOMNIAC_CAFFEINATE=$ROOT/tests/mocks/caffeinate
 export INSOMNIAC_OSASCRIPT=$ROOT/tests/mocks/osascript
 export INSOMNIAC_JXA=$ROOT/tests/mocks/jxa
+export INSOMNIAC_CURL=$ROOT/tests/mocks/curl INSOMNIAC_OPEN=$ROOT/tests/mocks/open
 export INSOMNIAC_POLL=1
-export alfred_workflow_data=$SANDBOX/data
+export alfred_workflow_data=$SANDBOX/data alfred_workflow_cache=$SANDBOX/cache
 export PATH=$ROOT/tests/mocks:$PATH
 mkdir -p $MOCK_DIR $INSOMNIAC_PREFIX/var/run
 
@@ -238,6 +239,95 @@ print -n $decoy > $alfred_workflow_data/menubar.pid
 engine stop >/dev/null
 check "stale pid file: an unrelated process is never killed" eval 'alive $decoy'
 kill $decoy; pkill -f jxa-mock 2>/dev/null
+
+# --- updates (GitHub build) -----------------------------------------------------
+source $WF/lib/update.zsh
+for spec in "1.2.0 1.1.0" "1.10.0 1.9.9" "2.0.0 1.99.99" "1.2.0 1.2.0-beta" "v1.2.0 1.1.9" "1.1.1 1.1"; do
+  version_gt ${=spec} && ok "version_gt ${spec/ / > }" || bad "version_gt ${spec/ / > }"
+done
+for spec in "1.1.0 1.1.0" "1.0.9 1.1.0" "1.2.0-beta 1.2.0" "0.9 1.0.0"; do
+  version_gt ${=spec} && bad "version_gt ${spec/ / > } should be false" || ok "not version_gt ${spec/ / > }"
+done
+CUR=$(current_version)
+check "current version read from info.plist" eval '[[ $CUR == <->.<->.<-> ]]'
+UPD=$alfred_workflow_cache/update
+mkpkg() {  # version → a fake GitHub release containing a real build
+  zsh $ROOT/scripts/build.sh $1 >/dev/null
+  mkdir -p $MOCK_DIR/releases/v$1
+  mv -f $ROOT/dist/Insomniac-$1.alfredworkflow $ROOT/dist/Insomniac-$1.alfredworkflow.sha256 $MOCK_DIR/releases/v$1/
+}
+heads() { grep -c -- '-fsSI' $MOCK_DIR/curl.log 2>/dev/null || print 0 }
+mkpkg 9.0.0
+print 9.0.0 > $MOCK_DIR/latest
+rm -f $UPD $MOCK_DIR/curl.log
+filter >/dev/null
+check "first menu open starts a background update check" wait_for '[[ $(cat $UPD 2>/dev/null) == "9.0.0 "* ]]'
+check "newer release is announced in the menu" eval '[[ $(titles) == *"Update available: Insomniac 9.0.0"* ]]'
+check "announce item installs that version" eval '[[ $(filter) == *'"'"'"arg":"update_install 9.0.0"'"'"'* ]]'
+n=$(heads); filter >/dev/null; filter >/dev/null; sleep 0.3
+check "checks at most once a day" eval '[[ $(heads) == $n ]]'
+print -r -- "9.0.0 $(( EPOCHSECONDS - 90000 ))" > $UPD
+filter >/dev/null
+check "rechecks after 24h" wait_for '(( $(heads) > n ))'
+check "update_mode=off hides the notice" eval '[[ $(update_mode=off titles) != *"Update available"* ]]'
+bg_done() { wait_for '! pgrep -f "toggle_engine.sh update_check" >/dev/null' }
+bg_done; rm -f $UPD; update_mode=off filter >/dev/null; sleep 0.3
+check "update_mode=off never checks" eval '[[ ! -e $UPD ]]'
+print -r -- "9.0.0 $EPOCHSECONDS" > $UPD
+t=$(titles update)
+check "'update' query offers install + check now" eval '[[ $t == "Install Insomniac 9.0.0"*"Check for updates now"* ]]'
+print $CUR > $MOCK_DIR/latest
+check "manual check: up to date" eval '[[ $(engine update_check now) == "Insomniac $CUR is up to date" ]]'
+check "no notice when current" eval '[[ $(titles) != *"Update available"* ]]'
+check "install refuses when already current" eval '[[ $(engine update_install) == "Insomniac $CUR is up to date" ]]'
+touch $MOCK_DIR/offline
+check "manual check offline reports it" eval '[[ $(engine update_check now) == "Could not reach GitHub to check for updates" ]]'
+rm $MOCK_DIR/offline
+print 9.0.0 > $MOCK_DIR/latest
+check "manual check: newer available" eval '[[ $(engine update_check now) == "Insomniac 9.0.0 is available"* ]]'
+rm -f $MOCK_DIR/open.log
+msg=$(engine update_install 9.0.0)
+check "install downloads, verifies and opens in Alfred" eval '[[ $msg == "Opening Insomniac 9.0.0. Confirm the update in Alfred" && $(<$MOCK_DIR/open.log) == $alfred_workflow_cache/Insomniac-9.0.0.alfredworkflow ]]'
+cp $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow.sha256 $SANDBOX/good.sha
+print "0000000000000000000000000000000000000000000000000000000000000000  x" > $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow.sha256
+rm -f $MOCK_DIR/open.log
+check "tampered download is rejected" eval '[[ $(engine update_install 9.0.0) == "Update not installed: checksum mismatch" && ! -e $MOCK_DIR/open.log ]]'
+check "rejected download is deleted" eval '[[ ! -e $alfred_workflow_cache/Insomniac-9.0.0.alfredworkflow ]]'
+cp $SANDBOX/good.sha $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow.sha256
+mkdir -p $MOCK_DIR/releases/v9.1.0
+cp $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow $MOCK_DIR/releases/v9.1.0/Insomniac-9.1.0.alfredworkflow
+(cd $MOCK_DIR/releases/v9.1.0 && sha256sum Insomniac-9.1.0.alfredworkflow > Insomniac-9.1.0.alfredworkflow.sha256)
+check "package whose version differs from the tag is rejected" eval '[[ $(engine update_install 9.1.0) == "Update not installed: version mismatch" ]]'
+X=$SANDBOX/evil; mkdir -p $X/pkg $MOCK_DIR/releases/v9.2.0
+(cd $X/pkg && unzip -q $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow \
+  && sed -i.bak "s/$IN_LABEL/com.example.evil/; s/<string>9.0.0</<string>9.2.0</" info.plist && rm info.plist.bak \
+  && zip -q -r $MOCK_DIR/releases/v9.2.0/Insomniac-9.2.0.alfredworkflow .)
+(cd $MOCK_DIR/releases/v9.2.0 && sha256sum Insomniac-9.2.0.alfredworkflow > Insomniac-9.2.0.alfredworkflow.sha256)
+check "package with another bundle id is rejected" eval '[[ $(engine update_install 9.2.0) == "Update not installed: wrong bundle id" ]]'
+mkdir -p $MOCK_DIR/releases/v9.3.0
+cp $MOCK_DIR/releases/v9.0.0/Insomniac-9.0.0.alfredworkflow $MOCK_DIR/releases/v9.3.0/Insomniac-9.3.0.alfredworkflow
+check "release without a checksum is rejected" eval '[[ $(engine update_install 9.3.0) == "Update not installed: checksum missing" ]]'
+check "missing release asset is reported" eval '[[ $(engine update_install 9.9.9) == "Update not installed: download failed" ]]'
+check "invalid version argument is rejected" eval '[[ $(engine update_install "1.x") == "Invalid version: 1.x" ]]'
+rm -f $UPD $MOCK_DIR/open.log
+update_mode=auto engine update_check >/dev/null
+check "update_mode=auto downloads and opens on its own" eval '[[ $(<$MOCK_DIR/open.log) == *Insomniac-9.0.0.alfredworkflow ]]'
+rm -f $MOCK_DIR/open.log
+engine update_check >/dev/null
+check "update_mode=notify never opens anything by itself" eval '[[ ! -e $MOCK_DIR/open.log ]]'
+
+# --- Gallery build has no updater --------------------------------------------------
+zsh $ROOT/scripts/build.sh --gallery 9.0.0 >/dev/null
+G=$SANDBOX/gallery; mkdir -p $G && (cd $G && unzip -q $ROOT/dist/Insomniac-9.0.0-gallery.alfredworkflow)
+rm -f $ROOT/dist/Insomniac-9.0.0-gallery.alfredworkflow*
+gtitles() { $G/status_filter.sh "${1:-}" | python3 -c 'import json,sys; print("\n".join(i["title"] for i in json.load(sys.stdin)["items"]))' }
+bg_done; rm -f $UPD; gtitles >/dev/null; sleep 0.3
+check "gallery build never checks for updates" eval '[[ ! -e $UPD ]]'
+print -r -- "9.9.9 $EPOCHSECONDS" > $UPD
+check "gallery build never shows update notices" eval '[[ $(gtitles) != *"Update available"* ]]'
+check "gallery build: 'update' explains Alfred handles it" eval '[[ $(gtitles update) == "Insomniac"* && $($G/status_filter.sh update) == *"Alfred Gallery"* ]]'
+check "gallery build: engine refuses to self-update" eval '[[ $($G/toggle_engine.sh update_install 9.9.9) == "Updates for this copy are handled by Alfred" ]]'
+rm -f $UPD
 
 # --- uninstall -----------------------------------------------------------------
 engine uninstall >/dev/null
