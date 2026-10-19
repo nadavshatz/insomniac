@@ -38,6 +38,7 @@ Targets macOS 14 Sonoma, 15 Sequoia and later. Works on Apple Silicon and Intel.
 | `awake lid 2h` | Timed closed-lid session |
 | `awake until 17:30`, `awake @6pm` | Session ends at that wall-clock time |
 | **⌘↩** on any start item | Same duration in the *other* mode |
+| **⌥↩** on any start item | Same session with the opposite display choice. With the default setting, that means the display sleeps but the Mac stays awake |
 | ↩ on the status row | Stops everything and restores the default power settings |
 | `awake uninstall` | Removes the privileged helper and the boot guard |
 
@@ -51,7 +52,7 @@ Open Alfred Preferences → Workflows → Insomniac → *Configure Workflow…*
 | --- | --- | --- |
 | `keyword` | `awake` | Alfred keyword |
 | `presets` | `15m,30m,1h,2h` | Preset durations shown in the menu |
-| `prevent_display_sleep` | on | Adds `-d` to `caffeinate` |
+| `prevent_display_sleep` | on | Default display choice. On adds `-d` to `caffeinate`. Off lets the display sleep while the Mac stays awake (`-i` only). ⌥↩ flips it for one session |
 | `battery_floor` | `10` | On battery, closed-lid mode ends at this % (0 = off) |
 | `thermal_guard` | on | Closed-lid mode ends if macOS reports a thermal warning |
 
@@ -130,7 +131,7 @@ sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper 
 ## Development
 
 ```sh
-zsh tests/run_tests.sh       # 60 tests; pmset/caffeinate/osascript are mocked
+zsh tests/run_tests.sh       # 70 tests; pmset/caffeinate/osascript are mocked
 zsh scripts/build.sh         # package dist/*.alfredworkflow
 python3 scripts/make_plist.py   # regenerate info.plist   (dev only, stdlib)
 python3 scripts/make_icons.py   # regenerate icons        (dev only, Pillow)

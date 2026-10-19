@@ -145,6 +145,25 @@ engine start_idle 600 >/dev/null
 check "switch closed-lid → idle restores pmset" eval '[[ $(titles) == "Active (Idle Only): "* && $(sd) == 0 ]]'
 engine stop >/dev/null
 
+# --- per-session display choice (⌥↩) -----------------------------------------
+check "start items offer ⌥↩ with the opposite display choice" \
+  eval '[[ $(filter 45m) == *'"'"'"alt":{"arg":"start_idle 2700 display=0"'"'"'* ]]'
+msg=$(engine start_idle 600)
+check "default keeps display awake (-d)" eval '[[ $(<$MOCK_DIR/caffeinate.args) == *-d* && $(statefile) == *DISPLAY=1* ]]'
+msg=$(engine start_idle 600 display=0)
+check "display=0 drops -d, Mac stays awake (-i)" eval '[[ $(<$MOCK_DIR/caffeinate.args) == "-i -t 600" && $(statefile) == *DISPLAY=0* ]]'
+check "notification mentions display can sleep" eval '[[ $msg == *"display can sleep"* ]]'
+check "status row shows display choice" eval '[[ $(filter) == *"display can sleep · ↩ Stop"* ]]'
+engine extend 900 >/dev/null
+check "extend keeps the session's display choice" eval '[[ $(<$MOCK_DIR/caffeinate.args) != *-d* && $(statefile) == *DISPLAY=0* ]]'
+check "switch item carries display choice" eval '[[ $(filter) == *"start_closed_lid "<->" display=0"* ]]'
+engine start_closed_lid 600 display=0 >/dev/null
+check "closed-lid honours display=0" eval '[[ $(<$MOCK_DIR/caffeinate.args) != *-d* && $(sd) == 1 ]]'
+prevent_display_sleep=0 engine start_idle 600 >/dev/null
+check "setting off → display sleeps by default" eval '[[ $(<$MOCK_DIR/caffeinate.args) != *-d* ]]'
+check "setting off → ⌥↩ keeps display on" eval '[[ $(prevent_display_sleep=0 filter 45m) == *"start_idle 2700 display=1"* ]]'
+engine stop >/dev/null
+
 # --- uninstall -----------------------------------------------------------------
 engine uninstall >/dev/null
 check "uninstall removes helper and boot guard" eval '[[ ! -e $INSOMNIAC_PREFIX/Library/PrivilegedHelperTools/$IN_LABEL.helper && ! -e $INSOMNIAC_PREFIX/Library/LaunchDaemons/$IN_LABEL.bootguard.plist ]]'

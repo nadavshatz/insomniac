@@ -53,12 +53,12 @@ The script returns `"rerun": 1` while a session is active, so Alfred refreshes t
 | with input as | `argv` |
 | Run behaviour | **Sequentially** (the engine also takes a file lock) |
 
-The engine receives the item's `arg`, for example `start_idle 900`, `start_closed_lid 0`, `extend 3600`, `stop`, `restore` or `uninstall`. It prints a one-line result.
+The engine receives the item's `arg`, for example `start_idle 900`, `start_idle 900 display=0`, `start_closed_lid 0`, `extend 3600`, `stop`, `restore` or `uninstall`. It prints a one-line result.
 
 ### Post Notification (Outputs → Post Notification)
 Title `Insomniac`, Text `{query}`, ✔ *Only show if passed in argument has content*.
 
-Connect the three blocks left to right. Leave the modifier on the connection empty: ⌘↩ alternatives come from the `mods` key in the Script Filter JSON.
+Connect the three blocks left to right. Leave the modifier on the connection empty: the ⌘↩ (other mode) and ⌥↩ (other display choice) alternatives come from the `mods` key in the Script Filter JSON.
 
 ## 4. Icons
 

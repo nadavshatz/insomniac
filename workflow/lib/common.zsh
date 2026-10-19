@@ -56,7 +56,7 @@ state_read() {
   while IFS= read -r line; do
     [[ $line == (#b)([A-Z_]##)=([A-Za-z0-9_.-]#) ]] || continue
     k=$match[1] v=$match[2]
-    [[ $k == (MODE|STARTED|EXPIRES|CAF_PID|GUARD_PID|SECS) ]] && ST[$k]=$v
+    [[ $k == (MODE|STARTED|EXPIRES|CAF_PID|GUARD_PID|SECS|DISPLAY) ]] && ST[$k]=$v
   done < $IN_STATE
   [[ ${ST[MODE]:-} == (idle|lid) ]]
 }

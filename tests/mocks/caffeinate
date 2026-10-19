@@ -1,5 +1,6 @@
 #!/bin/zsh -f
 # Mock caffeinate: sleep for -t seconds (or "forever"), keeping "caffeinate" in argv0.
+print -r -- "$*" > $MOCK_DIR/caffeinate.args
 t=100000
 while (( $# )); do [[ $1 == -t ]] && { t=$2; shift }; shift; done
 exec -a caffeinate sleep $t

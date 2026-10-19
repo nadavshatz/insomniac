@@ -17,6 +17,7 @@ Type the keyword (default: awake) to see status or pick a mode:
   awake                 menu / live status
   awake 45m | 1h30m     timed idle-only session (⌘↩ = closed-lid)
   awake lid 2h          timed closed-lid session
+  ⌥↩ on a start item    same, with the opposite display choice
   awake until 17:30     until a wall-clock time
   awake uninstall       remove the privileged helper
 
@@ -97,7 +98,7 @@ info = {
          "description": "Comma-separated, e.g. 15m,30m,1h,2h",
          "config": {"default": "15m,30m,1h,2h", "placeholder": "15m,30m,1h,2h", "required": False, "trim": True}},
         {"variable": "prevent_display_sleep", "type": "checkbox", "label": "Display",
-         "description": "Also keep the display on (caffeinate -d).",
+         "description": "Default for new sessions. Unchecked: the display sleeps, the Mac stays awake. ⌥↩ flips it for one session.",
          "config": {"default": True, "required": False, "text": "Prevent display sleep"}},
         {"variable": "battery_floor", "type": "textfield", "label": "Battery floor (%)",
          "description": "Closed-lid mode ends automatically on battery at or below this level. 0 disables.",

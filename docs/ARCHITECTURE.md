@@ -35,6 +35,7 @@ STARTED=1792395000  # epoch
 SECS=3600           # requested duration, 0 = indefinite
 EXPIRES=1792398600  # epoch, 0 = indefinite
 CAF_PID=81234       # caffeinate
+DISPLAY=1           # 1 = caffeinate -d (display kept on), 0 = display may sleep
 GUARD_PID=81201     # root guardian (informational; truth is /var/run/…guardian.pid)
 ```
 

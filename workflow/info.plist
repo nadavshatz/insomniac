@@ -146,6 +146,7 @@ Type the keyword (default: awake) to see status or pick a mode:
   awake                 menu / live status
   awake 45m | 1h30m     timed idle-only session (⌘↩ = closed-lid)
   awake lid 2h          timed closed-lid session
+  ⌥↩ on a start item    same, with the opposite display choice
   awake until 17:30     until a wall-clock time
   awake uninstall       remove the privileged helper
 
@@ -238,7 +239,7 @@ Source &amp; docs: https://github.com/nadavshatz/insomniac</string>
 				<string>Prevent display sleep</string>
 			</dict>
 			<key>description</key>
-			<string>Also keep the display on (caffeinate -d).</string>
+			<string>Default for new sessions. Unchecked: the display sleeps, the Mac stays awake. ⌥↩ flips it for one session.</string>
 			<key>label</key>
 			<string>Display</string>
 			<key>type</key>

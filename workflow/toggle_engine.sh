@@ -2,8 +2,12 @@
 # toggle_engine.sh — Insomniac backend (Alfred "Run Script" action).
 #
 # Usage (Alfred passes the whole arg as one string; both forms work):
-#   toggle_engine.sh start_idle [seconds]         caffeinate; 0/omitted = indefinite
-#   toggle_engine.sh start_closed_lid [seconds]   pmset disablesleep 1 + root guardian
+#   toggle_engine.sh start_idle [seconds] [display=0|1]
+#       caffeinate; 0/omitted = indefinite
+#   toggle_engine.sh start_closed_lid [seconds] [display=0|1]
+#       pmset disablesleep 1 + root guardian
+#   display=1 keeps the display on (caffeinate -d), display=0 lets it sleep
+#   while the system stays awake. Omitted: the prevent_display_sleep setting.
 #   toggle_engine.sh extend <seconds>             add time to the running session
 #   toggle_engine.sh stop                         end everything, restore defaults
 #   toggle_engine.sh uninstall                    stop + remove root helper & boot guard
@@ -69,9 +73,12 @@ priv_cancelled() { [[ $PRIV_ERR == *(-128)* ]] }
 # ---------------------------------------------------------------------------
 # caffeinate
 # ---------------------------------------------------------------------------
+# 1 = keep the display awake for this session (set in main).
+typeset -gi DISP=0
+
 spawn_caffeinate() {  # seconds (0 = indefinite) → REPLY=pid
   local -a flags=(-i)
-  is_true $CFG_DISPLAY && flags+=(-d)
+  (( DISP )) && flags+=(-d)
   (( $1 > 0 )) && flags+=(-t $1)
   # nohup + closed stdio: survives Alfred finishing the script, and Alfred
   # does not wait on it.
@@ -93,10 +100,11 @@ kill_caffeinate() {
 describe() {  # mode secs → human message
   local what="Keeping your Mac awake"
   [[ $1 == lid ]] && what="Closed-lid mode on"
+  local disp=; (( DISP )) || disp=" · display can sleep"
   if (( $2 > 0 )); then
-    print -r -- "$what for $(fmt_dur $2) (until $(fmt_clock $(( EPOCHSECONDS + $2 ))))"
+    print -r -- "$what for $(fmt_dur $2) (until $(fmt_clock $(( EPOCHSECONDS + $2 ))))$disp"
   else
-    print -r -- "$what indefinitely"
+    print -r -- "$what indefinitely$disp"
   fi
 }
 
@@ -116,7 +124,7 @@ cmd_start_idle() {
     print "Failed to start caffeinate"; return 1
   fi
   state_write MODE=idle STARTED=$EPOCHSECONDS SECS=$secs \
-              EXPIRES=$(( secs ? EPOCHSECONDS + secs : 0 )) CAF_PID=$REPLY
+              EXPIRES=$(( secs ? EPOCHSECONDS + secs : 0 )) CAF_PID=$REPLY DISPLAY=$DISP
   describe idle $secs
 }
 
@@ -139,7 +147,7 @@ cmd_start_closed_lid() {
   kill_caffeinate
   spawn_caffeinate $secs
   state_write MODE=lid STARTED=$EPOCHSECONDS SECS=$secs EXPIRES=$expires \
-              CAF_PID=${REPLY:-} GUARD_PID=$gpid
+              CAF_PID=${REPLY:-} GUARD_PID=$gpid DISPLAY=$DISP
   describe lid $secs
 }
 
@@ -194,8 +202,17 @@ cmd_status() {
 main() {
   (( $# == 1 )) && set -- ${(z)1}
   local verb=${1:-}; shift 2>/dev/null
-  local n=${1:-0}
+  local n=${1:-0} opt=${2:-}
   [[ $n == <-> ]] || { print "Invalid duration: $n"; return 64 }
+  # Display choice: explicit display=0|1, else (for extend) the running
+  # session's choice, else the workflow setting.
+  if [[ $opt == display=(#b)([01]) ]]; then
+    DISP=$match[1]
+  elif [[ $verb == extend ]] && state_read && [[ ${ST[DISPLAY]:-} == [01] ]]; then
+    DISP=${ST[DISPLAY]}
+  else
+    is_true $CFG_DISPLAY && DISP=1
+  fi
   (( n <= MAX_SECS )) || n=$MAX_SECS
   case $verb in
     start_idle)       cmd_start_idle $n ;;

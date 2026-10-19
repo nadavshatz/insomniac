@@ -64,8 +64,8 @@ parse_query() {
 }
 parse_query
 
-DISPLAY_NOTE="display stays on"
-is_true $CFG_DISPLAY || DISPLAY_NOTE="display may sleep"
+integer DEF_DISP=0; is_true $CFG_DISPLAY && DEF_DISP=1
+disp_note() { (( $1 )) && print "display stays on" || print "display can sleep" }
 
 # Offer a timed (or indefinite) pair: primary mode on ↩, the other on ⌘↩.
 offer() {  # secs prefer_mode title_prefix
@@ -75,12 +75,19 @@ offer() {  # secs prefer_mode title_prefix
     idle_t="Keep Awake for $(fmt_dur $s)" lid_t+=" for $(fmt_dur $s)" icon=timer
     tail="Until $(fmt_clock $(( EPOCHSECONDS + s ))) · "
   fi
-  local idle_sub="${tail}Prevents idle sleep (caffeinate), $DISPLAY_NOTE · ⌘↩ closed-lid"
-  local lid_sub="${tail}Disables all system sleep (pmset) · needs admin · ⌘↩ idle-only"
+  local note=$(disp_note $DEF_DISP)
+  local idle_sub="${tail}Prevents idle sleep (caffeinate), $note · ⌘↩ closed-lid · ⌥↩ display"
+  local lid_sub="${tail}Disables all system sleep (pmset), $note · needs admin · ⌘↩ idle-only · ⌥↩ display"
+  # ⌥↩: same session with the opposite display choice.
+  integer alt=$(( !DEF_DISP ))
+  local alt_sub="${tail}Same, but the $(disp_note $alt) for this session"
+  (( alt )) || alt_sub="${tail}Same, but let the display sleep this time (Mac stays awake)"
   if [[ $2 == lid ]]; then
-    item "$3$lid_t" "$lid_sub" "start_closed_lid $s" true lid "start_idle $s" "$idle_sub"
+    item "$3$lid_t" "$lid_sub" "start_closed_lid $s" true lid "start_idle $s" "$idle_sub" \
+         "start_closed_lid $s display=$alt" "$alt_sub"
   else
-    item "$3$idle_t" "$idle_sub" "start_idle $s" true $icon "start_closed_lid $s" "$lid_sub"
+    item "$3$idle_t" "$idle_sub" "start_idle $s" true $icon "start_closed_lid $s" "$lid_sub" \
+         "start_idle $s display=$alt" "$alt_sub"
   fi
 }
 
@@ -130,7 +137,8 @@ case $STATUS in
       title="Active ($mode_label): Indefinite"
       when="Since $(fmt_clock ${ST[STARTED]:-$EPOCHSECONDS})"
     fi
-    item "$title" "$when · ↩ Stop and restore normal sleep" stop true $icon
+    integer sdisp=${ST[DISPLAY]:-$DEF_DISP}
+    item "$title" "$when · $(disp_note $sdisp) · ↩ Stop and restore normal sleep" stop true $icon
 
     if (( Q_SECS )); then
       offer $Q_SECS ${Q_MODE:-${ST[MODE]}} "Replace with: "
@@ -143,9 +151,9 @@ case $STATUS in
       fi
       integer rem=$(( exp ? (exp - EPOCHSECONDS > 0 ? exp - EPOCHSECONDS : 0) : 0 ))
       if [[ ${ST[MODE]} == idle ]]; then
-        item "Switch to Closed-Lid mode" "Keeps the same timer · needs admin" "start_closed_lid $rem" true lid
+        item "Switch to Closed-Lid mode" "Keeps the same timer · needs admin" "start_closed_lid $rem display=$sdisp" true lid
       else
-        item "Switch to Idle-Only mode" "Re-enables lid-close sleep · keeps the same timer" "start_idle $rem" true idle
+        item "Switch to Idle-Only mode" "Re-enables lid-close sleep · keeps the same timer" "start_idle $rem display=$sdisp" true idle
       fi
     fi
     ;;
