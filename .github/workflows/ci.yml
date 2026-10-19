@@ -24,6 +24,8 @@ jobs:
         run: zsh tests/run_tests.sh
       - name: Packaging test
         run: zsh tests/build_test.sh
+      - name: Wiki link check
+        run: zsh tests/wiki_test.sh
       - name: Menu bar indicator tests (Node, fake Cocoa bridge)
         run: node tests/menubar_test.js
       - name: Compile menu bar script with the real JXA compiler
@@ -39,6 +41,35 @@ jobs:
         with:
           name: Insomniac.alfredworkflow
           path: dist/*.alfredworkflow
+
+  wiki:
+    # Publish docs/wiki to the GitHub wiki on every push to main. GitHub only
+    # creates the wiki's git repo once a first page exists, so until someone
+    # saves any page at /wiki this job just warns.
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync docs/wiki → wiki
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          url="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
+          if ! git clone --depth 1 "$url" wiki 2>/dev/null; then
+            echo "::warning::Wiki not initialized. Save any first page at https://github.com/${GITHUB_REPOSITORY}/wiki/_new, then re-run this job."
+            exit 0
+          fi
+          rsync -a --delete --exclude .git docs/wiki/ wiki/
+          cd wiki
+          git add -A
+          if git diff --cached --quiet; then echo "Wiki already up to date"; exit 0; fi
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Sync from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+          git push
 
   release:
     # Push a tag like v1.2.0 to publish a GitHub Release with the workflow attached.

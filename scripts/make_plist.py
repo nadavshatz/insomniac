@@ -6,7 +6,7 @@ Object graph:  Script Filter ──▶ Run Script ──▶ Post Notification
 import plistlib
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 SF, RS, PN = ("A1F0C0FE-0001-4000-8000-000000000001",
               "A1F0C0FE-0002-4000-8000-000000000002",
               "A1F0C0FE-0003-4000-8000-000000000003")
