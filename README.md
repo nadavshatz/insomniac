@@ -154,7 +154,9 @@ CI (`.github/workflows/ci.yml`) runs the test suite on macOS and Linux for every
 git tag v1.2.0 && git push origin v1.2.0
 ```
 
-The `release` job reruns the tests, builds `Insomniac-1.2.0.alfredworkflow` with the version stamped from the tag, and attaches it to a new [GitHub Release](https://github.com/nadavshatz/insomniac/releases) with generated notes.
+Or, without a local tag: **Actions → CI → Run workflow** and enter the version (e.g. `1.2.0`). The job creates the `v1.2.0` tag itself.
+
+Either way, the `release` job reruns the tests, builds `Insomniac-1.2.0.alfredworkflow` with the version stamped from the tag, and attaches it to a new [GitHub Release](https://github.com/nadavshatz/insomniac/releases) with generated notes.
 
 Run the tests as a normal user, not root. They never change your real power settings. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the internals and [docs/SETUP.md](docs/SETUP.md) to wire the workflow by hand in Alfred's editor.
 
