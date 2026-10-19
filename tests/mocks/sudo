@@ -1,0 +1,3 @@
+#!/bin/sh
+# Mock sudo: never authorised (forces the osascript path).
+exit 1

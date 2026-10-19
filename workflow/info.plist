@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>io.github.nadavshatz.alfred-coffee</string>
+	<key>category</key>
+	<string>Tools</string>
+	<key>connections</key>
+	<dict>
+		<key>A1F0C0FE-0001-4000-8000-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A1F0C0FE-0002-4000-8000-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A1F0C0FE-0002-4000-8000-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A1F0C0FE-0003-4000-8000-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Nadav Shatz</string>
+	<key>description</key>
+	<string>Keep your Mac awake — timers, live countdown, closed-lid mode</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Insomniac</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<true/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>{var:keyword}</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Checking power state…</string>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>status_filter.sh</string>
+				<key>subtext</key>
+				<string>Status, timers and closed-lid mode</string>
+				<key>title</key>
+				<string>Insomniac — keep your Mac awake</string>
+				<key>type</key>
+				<integer>8</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>A1F0C0FE-0001-4000-8000-000000000001</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>toggle_engine.sh</string>
+				<key>type</key>
+				<integer>8</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A1F0C0FE-0002-4000-8000-000000000002</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Insomniac</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>A1F0C0FE-0003-4000-8000-000000000003</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Insomniac — keep your Mac awake, with a live countdown and true closed-lid support.
+
+Type the keyword (default: awake) to see status or pick a mode:
+  awake                 menu / live status
+  awake 45m | 1h30m     timed idle-only session (⌘↩ = closed-lid)
+  awake lid 2h          timed closed-lid session
+  awake until 17:30     until a wall-clock time
+  awake uninstall       remove the privileged helper
+
+Closed-lid mode uses `pmset -a disablesleep 1` and asks for an administrator
+password once per change. A root-owned guardian restores normal sleep when the
+timer ends, the battery runs low, or the Mac gets hot; a boot guard restores it
+after any crash or restart.
+
+Source &amp; docs: https://github.com/nadavshatz/alfred-coffee</string>
+	<key>uidata</key>
+	<dict>
+		<key>A1F0C0FE-0001-4000-8000-000000000001</key>
+		<dict>
+			<key>note</key>
+			<string>Status + menu. Re-runs every second while active.</string>
+			<key>xpos</key>
+			<real>40.0</real>
+			<key>ypos</key>
+			<real>40.0</real>
+		</dict>
+		<key>A1F0C0FE-0002-4000-8000-000000000002</key>
+		<dict>
+			<key>note</key>
+			<string>Backend: caffeinate / pmset / root guardian.</string>
+			<key>xpos</key>
+			<real>260.0</real>
+			<key>ypos</key>
+			<real>40.0</real>
+		</dict>
+		<key>A1F0C0FE-0003-4000-8000-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<real>470.0</real>
+			<key>ypos</key>
+			<real>40.0</real>
+		</dict>
+	</dict>
+	<key>userconfigurationconfig</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>awake</string>
+				<key>placeholder</key>
+				<string>awake</string>
+				<key>required</key>
+				<true/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Avoid 'sleep': it collides with Alfred's built-in Sleep system command.</string>
+			<key>label</key>
+			<string>Keyword</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>keyword</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>15m,30m,1h,2h</string>
+				<key>placeholder</key>
+				<string>15m,30m,1h,2h</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Comma-separated, e.g. 15m,30m,1h,2h</string>
+			<key>label</key>
+			<string>Preset durations</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>presets</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Prevent display sleep</string>
+			</dict>
+			<key>description</key>
+			<string>Also keep the display on (caffeinate -d).</string>
+			<key>label</key>
+			<string>Display</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>prevent_display_sleep</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>10</string>
+				<key>placeholder</key>
+				<string>10</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Closed-lid mode ends automatically on battery at or below this level. 0 disables.</string>
+			<key>label</key>
+			<string>Battery floor (%)</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>battery_floor</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Restore sleep when the Mac runs hot</string>
+			</dict>
+			<key>description</key>
+			<string>End closed-lid mode when macOS reports a thermal warning.</string>
+			<key>label</key>
+			<string>Thermal guard</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>thermal_guard</string>
+		</dict>
+	</array>
+	<key>variablesdontexport</key>
+	<array/>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>webaddress</key>
+	<string>https://github.com/nadavshatz/alfred-coffee</string>
+</dict>
+</plist>

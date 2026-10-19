@@ -1,0 +1,8 @@
+#!/bin/zsh -f
+# Mock osascript: emulates `do shell script ... with administrator privileges`
+# by running the shell command as the current user (root/wheel ownership dropped).
+while (( $# )) && [[ $1 != -- ]]; do shift; done; shift
+cmd=$1
+print -r -- "$cmd" >> $MOCK_DIR/osascript.log
+if [[ -e $MOCK_DIR/cancel ]]; then print -u2 "execution error: User canceled. (-128)"; exit 1; fi
+exec /bin/sh -c "${cmd//-o root -g wheel /}"

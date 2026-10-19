@@ -1,0 +1,11 @@
+#!/bin/zsh -f
+# Mock pmset for the test-suite. State lives in $MOCK_DIR.
+sd=$(cat $MOCK_DIR/sleepdisabled 2>/dev/null || print 0)
+case "$*" in
+  "-g")            print "System-wide power settings:\n SleepDisabled\t\t$sd\nCurrently in use:\n standby              1\n sleep                1" ;;
+  "-g batt")       cat $MOCK_DIR/batt 2>/dev/null || print "Now drawing from 'AC Power'\n -InternalBattery-0 (id=1)\t100%; charged; 0:00 remaining present: true" ;;
+  "-g therm")      cat $MOCK_DIR/therm 2>/dev/null || print "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded" ;;
+  "-g assertions") print "Listed by owning process:\n   pid 4242(zoom.us): [0x0001] 00:10:00 PreventUserIdleDisplaySleep named: \"Meeting\"\n   pid 1(powerd): [0x0002] 00:00:01 PreventUserIdleSystemSleep named: \"x\"" ;;
+  "-a disablesleep "[01]) print -n ${@[-1]} > $MOCK_DIR/sleepdisabled; print "pmset $*" >> $MOCK_DIR/pmset.log ;;
+  *) print -u2 "mock pmset: unsupported: $*"; exit 1 ;;
+esac

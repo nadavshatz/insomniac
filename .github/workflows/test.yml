@@ -1,0 +1,26 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zsh
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: Syntax check
+        run: for f in workflow/*.sh workflow/lib/*.zsh workflow/helper/*.sh scripts/build.sh tests/*.sh; do zsh -n "$f"; done
+      - name: Test suite (mocked pmset/caffeinate/osascript)
+        run: zsh tests/run_tests.sh
+      - name: Lint plists
+        if: runner.os == 'macOS'
+        run: plutil -lint workflow/info.plist workflow/helper/*.plist
+      - name: Build
+        run: zsh scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Insomniac.alfredworkflow
+          path: dist/*.alfredworkflow
