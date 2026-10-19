@@ -2,7 +2,7 @@
 # insomniac-helper — the ONLY part of Insomniac that runs as root.
 #
 # Installed root:wheel 0755 at
-#   /Library/PrivilegedHelperTools/io.github.nadavshatz.alfred-coffee.helper
+#   /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper
 # so root only ever executes a root-owned copy. It is self-contained (sources
 # nothing) and runs with -f (no rc files).
 #
@@ -24,7 +24,7 @@ emulate -L zsh
 setopt extended_glob no_unset
 zmodload zsh/datetime
 
-typeset -r LABEL="io.github.nadavshatz.alfred-coffee"
+typeset -r LABEL="io.github.nadavshatz.insomniac"
 
 # The sandbox prefix is honoured only when NOT running as root (test-suite).
 if (( EUID == 0 )); then

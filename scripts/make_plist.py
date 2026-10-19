@@ -25,7 +25,7 @@ password once per change. A root-owned guardian restores normal sleep when the
 timer ends, the battery runs low, or the Mac gets hot; a boot guard restores it
 after any crash or restart.
 
-Source & docs: https://github.com/nadavshatz/alfred-coffee"""
+Source & docs: https://github.com/nadavshatz/insomniac"""
 
 
 def conn(dest):
@@ -33,12 +33,12 @@ def conn(dest):
 
 
 info = {
-    "bundleid": "io.github.nadavshatz.alfred-coffee",
+    "bundleid": "io.github.nadavshatz.insomniac",
     "name": "Insomniac",
     "description": "Keep your Mac awake — timers, live countdown, closed-lid mode",
     "category": "Tools",
     "createdby": "Nadav Shatz",
-    "webaddress": "https://github.com/nadavshatz/alfred-coffee",
+    "webaddress": "https://github.com/nadavshatz/insomniac",
     "version": VERSION,
     "readme": README,
     "disabled": False,

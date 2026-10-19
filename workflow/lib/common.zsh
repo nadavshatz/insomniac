@@ -10,7 +10,7 @@ setopt extended_glob no_unset pipe_fail
 # ---------------------------------------------------------------------------
 # Identity & paths
 # ---------------------------------------------------------------------------
-typeset -r IN_LABEL="io.github.nadavshatz.alfred-coffee"
+typeset -r IN_LABEL="io.github.nadavshatz.insomniac"
 typeset -r IN_WF_DIR="${${(%):-%x}:A:h:h}"          # .../workflow
 
 # INSOMNIAC_PREFIX lets the test-suite redirect system paths into a sandbox.

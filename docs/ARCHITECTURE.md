@@ -39,8 +39,8 @@ GUARD_PID=81201     # root guardian (informational; truth is /var/run/…guardia
 ```
 
 Root-written, world-readable files in `/var/run` (cleared at boot):
-- `io.github.nadavshatz.alfred-coffee.guardian.pid`: the live guardian
-- `io.github.nadavshatz.alfred-coffee.last`: `<reason> <epoch>` for the last guardian exit (`timer`, `battery`, `thermal`, `stopped`, `signal`, `external`)
+- `io.github.nadavshatz.insomniac.guardian.pid`: the live guardian
+- `io.github.nadavshatz.insomniac.last`: `<reason> <epoch>` for the last guardian exit (`timer`, `battery`, `thermal`, `stopped`, `signal`, `external`)
 
 ## Reconciliation (every Script Filter run)
 

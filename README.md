@@ -19,10 +19,10 @@ Targets macOS 14 Sonoma, 15 Sequoia and later. Works on Apple Silicon and Intel.
 
 ## Installation
 
-1. Download `Insomniac-x.y.z.alfredworkflow` from [Releases](https://github.com/nadavshatz/alfred-coffee/releases), or build it yourself:
+1. Download `Insomniac-x.y.z.alfredworkflow` from [Releases](https://github.com/nadavshatz/insomniac/releases), or build it yourself:
    ```sh
-   git clone https://github.com/nadavshatz/alfred-coffee.git
-   cd alfred-coffee && zsh scripts/build.sh     # → dist/Insomniac-1.0.0.alfredworkflow
+   git clone https://github.com/nadavshatz/insomniac.git
+   cd insomniac && zsh scripts/build.sh     # → dist/Insomniac-1.0.0.alfredworkflow
    ```
 2. Double-click the file to import it into Alfred.
 3. In the configuration sheet, choose your keyword. The default is **`awake`**. If you prefer `sleep`, it works, but Alfred's built-in *Sleep* system command will appear next to it.
@@ -76,8 +76,8 @@ The first time you use closed-lid mode, a single native macOS authorization dial
 
 | File | Owner | Purpose |
 | --- | --- | --- |
-| `/Library/PrivilegedHelperTools/io.github.nadavshatz.alfred-coffee.helper` | `root:wheel 0755` | A copy of [`workflow/helper/insomniac-helper.sh`](workflow/helper/insomniac-helper.sh). Its commands: `enable`, `disable`, `status`, `uninstall`. |
-| `/Library/LaunchDaemons/io.github.nadavshatz.alfred-coffee.bootguard.plist` | `root:wheel 0644` | Runs `/usr/bin/pmset -a disablesleep 0` once at every boot. That's all it does. |
+| `/Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper` | `root:wheel 0755` | A copy of [`workflow/helper/insomniac-helper.sh`](workflow/helper/insomniac-helper.sh). Its commands: `enable`, `disable`, `status`, `uninstall`. |
+| `/Library/LaunchDaemons/io.github.nadavshatz.insomniac.bootguard.plist` | `root:wheel 0644` | Runs `/usr/bin/pmset -a disablesleep 0` once at every boot. That's all it does. |
 
 Design choices:
 
@@ -92,7 +92,7 @@ Design choices:
 If you use closed-lid mode often, you can let *only the helper* run without a password. Run `sudo visudo -f /etc/sudoers.d/insomniac` and add (replace `you` with your short username):
 
 ```
-you ALL=(root) NOPASSWD: /Library/PrivilegedHelperTools/io.github.nadavshatz.alfred-coffee.helper
+you ALL=(root) NOPASSWD: /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper
 ```
 
 Insomniac detects the rule (`sudo -n -l`) and uses it automatically. The trade-off: any process running as your user can then turn sleep prevention on or off without asking you. The workflow never touches sudoers itself.
@@ -123,8 +123,8 @@ Insomniac detects the rule (`sudo -n -l`) and uses it automatically. The trade-o
 To clean up manually:
 ```sh
 sudo pmset -a disablesleep 0
-sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.alfred-coffee.helper \
-           /Library/LaunchDaemons/io.github.nadavshatz.alfred-coffee.bootguard.plist
+sudo rm -f /Library/PrivilegedHelperTools/io.github.nadavshatz.insomniac.helper \
+           /Library/LaunchDaemons/io.github.nadavshatz.insomniac.bootguard.plist
 ```
 
 ## Development

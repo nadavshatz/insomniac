@@ -10,7 +10,7 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>io.github.nadavshatz.alfred-coffee.bootguard</string>
+	<string>io.github.nadavshatz.insomniac.bootguard</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/bin/pmset</string>

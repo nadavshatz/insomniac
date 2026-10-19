@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>io.github.nadavshatz.alfred-coffee</string>
+	<string>io.github.nadavshatz.insomniac</string>
 	<key>category</key>
 	<string>Tools</string>
 	<key>connections</key>
@@ -154,7 +154,7 @@ password once per change. A root-owned guardian restores normal sleep when the
 timer ends, the battery runs low, or the Mac gets hot; a boot guard restores it
 after any crash or restart.
 
-Source &amp; docs: https://github.com/nadavshatz/alfred-coffee</string>
+Source &amp; docs: https://github.com/nadavshatz/insomniac</string>
 	<key>uidata</key>
 	<dict>
 		<key>A1F0C0FE-0001-4000-8000-000000000001</key>
@@ -292,6 +292,6 @@ Source &amp; docs: https://github.com/nadavshatz/alfred-coffee</string>
 	<key>version</key>
 	<string>1.0.0</string>
 	<key>webaddress</key>
-	<string>https://github.com/nadavshatz/alfred-coffee</string>
+	<string>https://github.com/nadavshatz/insomniac</string>
 </dict>
 </plist>

@@ -5,7 +5,7 @@ The release `.alfredworkflow` comes fully wired. This guide is for building it b
 ## 1. Create the workflow
 
 1. Open Alfred Preferences → **Workflows** → **+** → *Blank Workflow*.
-2. Fill in **Name** `Insomniac`, **Bundle Id** `io.github.nadavshatz.alfred-coffee`, **Created By** and **Website**. Drag `workflow/icon.png` onto the icon well.
+2. Fill in **Name** `Insomniac`, **Bundle Id** `io.github.nadavshatz.insomniac`, **Created By** and **Website**. Drag `workflow/icon.png` onto the icon well.
 3. Right-click the workflow → *Open in Finder*. Copy everything from this repo's `workflow/` folder into that folder: `status_filter.sh`, `toggle_engine.sh`, `lib/`, `helper/` and `icons/`.
 4. Make the scripts executable:
    ```sh
@@ -22,7 +22,7 @@ The release `.alfredworkflow` comes fully wired. This guide is for building it b
 | Text Field | `battery_floor` | `10` | Battery floor (%) |
 | Checkbox | `thermal_guard` | ✔ | Thermal guard |
 
-Alfred exports these to both scripts as environment variables. The scripts also read `alfred_workflow_data`, which Alfred sets automatically. State is stored at `~/Library/Application Support/Alfred/Workflow Data/io.github.nadavshatz.alfred-coffee/state`.
+Alfred exports these to both scripts as environment variables. The scripts also read `alfred_workflow_data`, which Alfred sets automatically. State is stored at `~/Library/Application Support/Alfred/Workflow Data/io.github.nadavshatz.insomniac/state`.
 
 ## 3. Blocks
 
@@ -79,5 +79,5 @@ Connect the three blocks left to right. Leave the modifier on the connection emp
 ## 5. Optional extras
 
 - **Hotkey:** add *Triggers → Hotkey* → connect to the Script Filter to open the status view with one keystroke.
-- **External Trigger:** add *Triggers → External Trigger* (id `toggle`) → connect to the Run Script with argument `stop`. Then `osascript -e 'tell application id "com.runningwithcrayons.Alfred" to run trigger "toggle" in workflow "io.github.nadavshatz.alfred-coffee" with argument "stop"'` works from Shortcuts and cron.
+- **External Trigger:** add *Triggers → External Trigger* (id `toggle`) → connect to the Run Script with argument `stop`. Then `osascript -e 'tell application id "com.runningwithcrayons.Alfred" to run trigger "toggle" in workflow "io.github.nadavshatz.insomniac" with argument "stop"'` works from Shortcuts and cron.
 - **Terminal use:** the engine also works without Alfred, e.g. `./toggle_engine.sh start_closed_lid 3600`.
